@@ -16,11 +16,14 @@
       height: 170px;
       margin-bottom: 10px;
     }
-    video {
+    video, iframe {
       width: 100%;
       height: 100%;
       border: none;
       border-radius: 8px;
+    }
+    .leaflet-popup-content-wrapper {
+      max-width: 320px;
     }
   </style>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -38,39 +41,50 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    const createVideoPopup = (streamUrl) => {
+    const createVideoPopup = (streamUrl, type = 'hls', label = '') => {
       const container = document.createElement('div');
       container.className = 'video-popup';
-      container.innerHTML = `
-        <video controls autoplay muted playsinline>
-          <source src="${streamUrl}" type="application/x-mpegURL">
-          Your browser does not support the video tag.
-        </video>
-      `;
-      const video = container.querySelector('video');
-      const videoSrc = video.querySelector('source').src;
-      if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(videoSrc);
-        hls.attachMedia(video);
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = videoSrc;
+
+      const title = document.createElement('div');
+      title.style.fontWeight = 'bold';
+      title.style.marginBottom = '5px';
+      title.textContent = label;
+      container.appendChild(title);
+
+      if (type === 'iframe') {
+        const iframe = document.createElement('iframe');
+        iframe.src = streamUrl;
+        iframe.allowFullscreen = true;
+        container.appendChild(iframe);
+      } else {
+        container.innerHTML += `
+          <video controls autoplay muted playsinline>
+            <source src="${streamUrl}" type="application/x-mpegURL">
+            Your browser does not support the video tag.
+          </video>
+        `;
+        const video = container.querySelector('video');
+        const videoSrc = video.querySelector('source').src;
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(videoSrc);
+          hls.attachMedia(video);
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = videoSrc;
+        }
       }
       return container;
     };
 
-    // Камера с Ivideon
+    // Камера с Ivideon через iframe
     const marker1 = L.marker([34.1808, -118.3089]).addTo(map);
-    const popup1 = document.createElement('div');
-    popup1.appendChild(createVideoPopup("https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536.m3u8"));
+    const popup1 = createVideoPopup("https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536/?lang=ru", "iframe", "Main Office Camera");
     marker1.bindPopup(popup1);
 
     // Временный тестовый стрим Mux — рядом на карте
     const marker2 = L.marker([34.1805, -118.3092]).addTo(map);
-    const popup2 = document.createElement('div');
-    popup2.appendChild(createVideoPopup("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"));
+    const popup2 = createVideoPopup("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", "hls", "Test Camera Mux");
     marker2.bindPopup(popup2);
   </script>
 </body>
 </html>
-
