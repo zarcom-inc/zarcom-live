@@ -3,66 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zarcom Live</title>
+  <title>Zarcom Camera Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    body {
+    html, body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f2f2f2;
+      padding: 0;
+      height: 100%;
     }
-
-    header {
-      background-color: #ff7a00;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .logo {
-      max-width: 120px;
-      margin-bottom: 10px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 20px;
-      padding: 20px;
-    }
-
-    .camera {
-      background: black;
-      border: 2px solid #ff7a00;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    iframe {
+    #map {
       width: 100%;
-      height: 250px;
-      border: none;
+      height: 100%;
+    }
+    .leaflet-popup-content iframe {
+      width: 300px;
+      height: 200px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Zarcom Live Camera</h1>
-  </header>
+  <div id="map"></div>
 
-  <div class="grid">
-    <div class="camera">
-      <iframe src="https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536/?lang=ru" allowfullscreen></iframe>
-    </div>
-    <div class="camera">
-      <iframe src="https://public.ivideon.com/camera/ID_КАМЕРЫ_2" allowfullscreen></iframe>
-    </div>
-    <div class="camera">
-      <iframe src="https://public.ivideon.com/camera/ID_КАМЕРЫ_3" allowfullscreen></iframe>
-    </div>
-    <div class="camera">
-      <iframe src="https://public.ivideon.com/camera/ID_КАМЕРЫ_4" allowfullscreen></iframe>
-    </div>
-  </div>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([34.1834, -118.3122], 15); // Центр Burbank
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const cameras = [
+      {
+        name: "Zarcom Office",
+        lat: 34.1834,
+        lng: -118.3122,
+        url: "https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536/?lang=ru"
+      }
+    ];
+
+    cameras.forEach(cam => {
+      const popupContent = `<b>${cam.name}</b><br><iframe src="${cam.url}" frameborder="0" allowfullscreen></iframe>`;
+      L.marker([cam.lat, cam.lng]).addTo(map).bindPopup(popupContent);
+    });
+  </script>
 </body>
 </html>
 
