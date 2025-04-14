@@ -85,6 +85,11 @@
     const marker2 = L.marker([34.1805, -118.3092]).addTo(map);
     const popup2 = createVideoPopup("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", "hls", "Test Camera Mux");
     marker2.bindPopup(popup2);
+
+    // RTMP через HLS с собственного сервера (пример)
+    const marker3 = L.marker([34.1802, -118.3094]).addTo(map);
+    const popup3 = createVideoPopup("http://YOUR_SERVER_IP/hls/camera1.m3u8", "hls", "RTMP Camera 1");
+    marker3.bindPopup(popup3);
   </script>
 </body>
 </html>
