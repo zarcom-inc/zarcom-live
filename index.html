@@ -14,6 +14,7 @@
     .video-popup {
       width: 300px;
       height: 170px;
+      margin-bottom: 10px;
     }
     video {
       width: 100%;
@@ -41,7 +42,7 @@
       const container = document.createElement('div');
       container.className = 'video-popup';
       container.innerHTML = `
-        <video id="popupVideo" controls autoplay muted playsinline>
+        <video controls autoplay muted playsinline>
           <source src="${streamUrl}" type="application/x-mpegURL">
           Your browser does not support the video tag.
         </video>
@@ -58,8 +59,11 @@
       return container;
     };
 
-    const cameraMarker = L.marker([34.1808, -118.3089]).addTo(map);
-    cameraMarker.bindPopup(createVideoPopup("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"));
+    const marker = L.marker([34.1808, -118.3089]).addTo(map);
+    const popupContent = document.createElement('div');
+    popupContent.appendChild(createVideoPopup("https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536.m3u8")); // Ivideon
+    popupContent.appendChild(createVideoPopup("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8")); // Временный плеер
+    marker.bindPopup(popupContent);
   </script>
 </body>
 </html>
