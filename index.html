@@ -14,7 +14,7 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    const map = L.map('map').setView([34.0522, -118.2437], 13);
+    const map = L.map('map').setView([34.1825, -118.3131], 16);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -29,11 +29,11 @@
     });
 
     // Ivideon камера
-    L.marker([34.0522, -118.2437], { icon }).addTo(map)
+    L.marker([34.1825, -118.3131], { icon }).addTo(map)
       .bindPopup(`<iframe src="https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536/?lang=en" width="300" height="200" frameborder="0" allowfullscreen></iframe>`);
 
     // Тестовая HLS
-    L.marker([34.0518, -118.2433], { icon }).addTo(map)
+    L.marker([34.1827, -118.3128], { icon }).addTo(map)
       .bindPopup(`<video controls autoplay muted playsinline width="300" height="200">
         <source src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" type="application/x-mpegURL">
         Ваш браузер не поддерживает воспроизведение HLS.
@@ -41,7 +41,7 @@
 
     // RTMP/HLS с сервера с hls.js
     const rtmpPopup = L.popup().setContent(`<video id="rtmpPlayer" width="300" height="200" controls muted autoplay playsinline></video>`);
-    const rtmpMarker = L.marker([34.0528, -118.2427], { icon }).addTo(map).bindPopup(rtmpPopup);
+    const rtmpMarker = L.marker([34.1829, -118.3126], { icon }).addTo(map).bindPopup(rtmpPopup);
 
     map.on('popupopen', function (e) {
       if (e.popup === rtmpPopup) {
