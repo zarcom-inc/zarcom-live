@@ -7,13 +7,17 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     #map { height: 100vh; }
+    .leaflet-popup-content video {
+      max-width: 100%;
+      height: auto;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([34.0522, -118.2437], 13); // Пример: Лос-Анджелес
+    const map = L.map('map').setView([34.0522, -118.2437], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -26,12 +30,22 @@
     });
 
     const marker = L.marker([34.0522, -118.2437], { icon: cameraIcon }).addTo(map);
-
     marker.bindPopup(`
-      <video controls autoplay muted playsinline width="300" height="200">
-        <source src="http://5.161.202.172/hls/camera1_720p2628kbs/index.m3u8" type="application/x-mpegURL">
-        Ваш браузер не поддерживает HLS.
-      </video>
+      <div>
+        <strong>Камера 1 (720p)</strong><br>
+        <video controls autoplay muted playsinline width="300">
+          <source src="http://5.161.202.172/hls/camera1_720p2628kbs/index.m3u8" type="application/x-mpegURL">
+          Ваш браузер не поддерживает HLS.
+        </video>
+        <br><strong>Камера 1 (480p)</strong><br>
+        <video controls autoplay muted playsinline width="300">
+          <source src="http://5.161.202.172/hls/camera1_480p1128kbs/index.m3u8" type="application/x-mpegURL">
+        </video>
+        <br><strong>Камера 1 (360p)</strong><br>
+        <video controls autoplay muted playsinline width="300">
+          <source src="http://5.161.202.172/hls/camera1_360p878kbs/index.m3u8" type="application/x-mpegURL">
+        </video>
+      </div>
     `);
   </script>
 </body>
