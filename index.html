@@ -20,36 +20,44 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    const blueIcon = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/854/854878.png', // синий значок камеры
+    const ivideonIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/854/854878.png',
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30]
+    });
+
+    const testIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/854/854878.png',
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30]
+    });
+
+    const rtmpIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/854/854878.png',
       iconSize: [30, 30],
       iconAnchor: [15, 30],
       popupAnchor: [0, -30]
     });
 
     // Ivideon камера
-    L.marker([34.0522, -118.2437], { icon: blueIcon }).addTo(map)
-      .bindPopup(`
-        <iframe src="https://play.webvideocore.net/?video_force_aspect=1&stretch=uniform&autoplay=1&url=https://video.wvcdn.net/record/001/639/846/0001639846_720p.mp4" width="300" height="200" frameborder="0" allowfullscreen></iframe>
-      `);
+    L.marker([34.0522, -118.2437], { icon: ivideonIcon }).addTo(map)
+      .bindPopup(`<iframe src="https://play.webvideocore.net/?video_force_aspect=1&stretch=uniform&autoplay=1&url=https://video.wvcdn.net/record/001/639/846/0001639846_720p.mp4" width="300" height="200" frameborder="0" allowfullscreen></iframe>`);
 
-    // Тестовое видео (демо)
-    L.marker([34.0532, -118.2437], { icon: blueIcon }).addTo(map)
-      .bindPopup(`
-        <video controls autoplay muted playsinline width="300" height="200">
-          <source src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" type="application/x-mpegURL">
-          Ваш браузер не поддерживает воспроизведение HLS.
-        </video>
-      `);
+    // Тестовая HLS
+    L.marker([34.0518, -118.2433], { icon: testIcon }).addTo(map)
+      .bindPopup(`<video controls autoplay muted playsinline width="300" height="200">
+        <source src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" type="application/x-mpegURL">
+        Ваш браузер не поддерживает воспроизведение HLS.
+      </video>`);
 
-    // RTMP/HLS камера с сервера
-    L.marker([34.0542, -118.2437], { icon: blueIcon }).addTo(map)
-      .bindPopup(`
-        <video controls autoplay muted playsinline width="300" height="200">
-          <source src="http://5.161.202.172/hls/camera1_720p2628kbs/index.m3u8" type="application/x-mpegURL">
-          Ваш браузер не поддерживает HLS.
-        </video>
-      `);
+    // RTMP/HLS с сервера
+    L.marker([34.0528, -118.2427], { icon: rtmpIcon }).addTo(map)
+      .bindPopup(`<video controls autoplay muted playsinline width="300" height="200">
+        <source src="http://5.161.202.172/hls/camera1_720p2628kbs/index.m3u8" type="application/x-mpegURL">
+        Ваш браузер не поддерживает HLS.
+      </video>`);
   </script>
 </body>
 </html>
