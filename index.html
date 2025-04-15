@@ -20,34 +20,36 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    const cameraIcon = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/2947/2947761.png', // синий значок камеры
-      iconSize: [30, 30]
+    const blueIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/854/854878.png', // синий значок камеры
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30]
     });
 
     // Ivideon камера
-    const markerIvideon = L.marker([34.0522, -118.2437], { icon: cameraIcon }).addTo(map);
-    markerIvideon.bindPopup(`
-      <iframe src="https://play.webvideocore.net/?video_force_aspect=1&stretch=uniform&autoplay=1&url=https://video.wvcdn.net/record/001/639/846/0001639846_720p.mp4" width="300" height="200" frameborder="0" allowfullscreen></iframe>
-    `);
+    L.marker([34.0522, -118.2437], { icon: blueIcon }).addTo(map)
+      .bindPopup(`
+        <iframe src="https://play.webvideocore.net/?video_force_aspect=1&stretch=uniform&autoplay=1&url=https://video.wvcdn.net/record/001/639/846/0001639846_720p.mp4" width="300" height="200" frameborder="0" allowfullscreen></iframe>
+      `);
 
     // Тестовое видео (демо)
-    const markerTest = L.marker([34.0532, -118.2437], { icon: cameraIcon }).addTo(map);
-    markerTest.bindPopup(`
-      <video controls autoplay muted playsinline width="300" height="200">
-        <source src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" type="application/x-mpegURL">
-        Ваш браузер не поддерживает воспроизведение HLS.
-      </video>
-    `);
+    L.marker([34.0532, -118.2437], { icon: blueIcon }).addTo(map)
+      .bindPopup(`
+        <video controls autoplay muted playsinline width="300" height="200">
+          <source src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" type="application/x-mpegURL">
+          Ваш браузер не поддерживает воспроизведение HLS.
+        </video>
+      `);
 
-    // RTMP/HLS с твоего сервера (прямая HLS-ссылка без скриптов)
-    const markerRTMP = L.marker([34.0542, -118.2437], { icon: cameraIcon }).addTo(map);
-    markerRTMP.bindPopup(`
-      <video controls autoplay muted playsinline width="300" height="200">
-        <source src="http://5.161.202.172/hls/camera1_720p2628kbs/index.m3u8" type="application/x-mpegURL">
-        Ваш браузер не поддерживает HLS.
-      </video>
-    `);
+    // RTMP/HLS камера с сервера
+    L.marker([34.0542, -118.2437], { icon: blueIcon }).addTo(map)
+      .bindPopup(`
+        <video controls autoplay muted playsinline width="300" height="200">
+          <source src="http://5.161.202.172/hls/camera1_720p2628kbs/index.m3u8" type="application/x-mpegURL">
+          Ваш браузер не поддерживает HLS.
+        </video>
+      `);
   </script>
 </body>
 </html>
