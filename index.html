@@ -1,15 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Camera Stream</title>
+  <title>Zarcom Live Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; }
+  </style>
 </head>
 <body>
-  <h1>Live Camera Stream</h1>
-  <video controls autoplay muted playsinline width="640" height="360">
-    <source src="http://5.161.202.172/hls/camera1_720p2628kbs/index.m3u8" type="application/x-mpegURL">
-    Your browser does not support the video tag.
-  </video>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([34.0522, -118.2437], 13); // Пример: Лос-Анджелес
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const cameraIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+      iconSize: [30, 30]
+    });
+
+    const marker = L.marker([34.0522, -118.2437], { icon: cameraIcon }).addTo(map);
+
+    marker.bindPopup(`
+      <video controls autoplay muted playsinline width="300" height="200">
+        <source src="http://5.161.202.172/hls/camera1_720p2628kbs/index.m3u8" type="application/x-mpegURL">
+        Ваш браузер не поддерживает HLS.
+      </video>
+    `);
+  </script>
 </body>
 </html>
