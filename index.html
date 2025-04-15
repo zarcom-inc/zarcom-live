@@ -25,28 +25,27 @@
       iconSize: [30, 30]
     });
 
-    // Камера 720p
-    const marker720 = L.marker([34.0522, -118.2437], { icon: cameraIcon }).addTo(map);
-    marker720.bindPopup(`
+    // Ivideon камера
+    const markerIvideon = L.marker([34.0522, -118.2437], { icon: cameraIcon }).addTo(map);
+    markerIvideon.bindPopup(`
+      <iframe src="https://play.webvideocore.net/?video_force_aspect=1&stretch=uniform&autoplay=1&url=https://video.wvcdn.net/record/001/639/846/0001639846_720p.mp4" width="300" height="200" frameborder="0" allowfullscreen></iframe>
+    `);
+
+    // Тестовое видео (демо)
+    const markerTest = L.marker([34.0532, -118.2437], { icon: cameraIcon }).addTo(map);
+    markerTest.bindPopup(`
       <video controls autoplay muted playsinline width="300" height="200">
-        <source src="http://5.161.202.172/hls/camera1_720p2628kbs/index.m3u8" type="application/x-mpegURL">
+        <source src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" type="application/x-mpegURL">
         Ваш браузер не поддерживает воспроизведение HLS.
       </video>
     `);
 
-    // Камера 480p
-    const marker480 = L.marker([34.0532, -118.2437], { icon: cameraIcon }).addTo(map);
-    marker480.bindPopup(`
+    // RTMP/HLS с твоего сервера
+    const markerRTMP = L.marker([34.0542, -118.2437], { icon: cameraIcon }).addTo(map);
+    markerRTMP.bindPopup(`
       <video controls autoplay muted playsinline width="300" height="200">
-        <source src="http://5.161.202.172/hls/camera1_480p1128kbs/index.m3u8" type="application/x-mpegURL">
-      </video>
-    `);
-
-    // Камера 360p
-    const marker360 = L.marker([34.0542, -118.2437], { icon: cameraIcon }).addTo(map);
-    marker360.bindPopup(`
-      <video controls autoplay muted playsinline width="300" height="200">
-        <source src="http://5.161.202.172/hls/camera1_360p878kbs/index.m3u8" type="application/x-mpegURL">
+        <source src="http://5.161.202.172/hls/camera1_720p2628kbs/index.m3u8" type="application/x-mpegURL">
+        Ваш браузер не поддерживает воспроизведение HLS.
       </video>
     `);
   </script>
