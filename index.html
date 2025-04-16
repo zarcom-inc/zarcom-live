@@ -90,6 +90,11 @@
     const marker3 = L.marker([34.1802, -118.3094]).addTo(map);
     const popup3 = createVideoPopup("https://5.161.202.172/hls/camera1.m3u8", "hls", "RTMP Camera 1");
     marker3.bindPopup(popup3);
+
+    // ✅ Добавлена твоя рабочая камера
+    const marker4 = L.marker([34.1800, -118.3097]).addTo(map);
+    const popup4 = createVideoPopup("http://5.78.131.127/hls/TEST1.m3u8", "hls", "Zarcom RTMP Camera");
+    marker4.bindPopup(popup4);
   </script>
 </body>
 </html>
