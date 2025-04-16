@@ -34,7 +34,7 @@
   <div id="map"></div>
 
   <script>
-    const map = L.map('map').setView([34.1808, -118.3089], 16); // Координаты Burbank, CA
+    const map = L.map('map').setView([34.1808, -118.3089], 16);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -76,24 +76,20 @@
       return container;
     };
 
-    // Камера с Ivideon через iframe
     const marker1 = L.marker([34.1808, -118.3089]).addTo(map);
     const popup1 = createVideoPopup("https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536/?lang=ru", "iframe", "Main Office Camera");
     marker1.bindPopup(popup1);
 
-    // Временный тестовый стрим Mux — рядом на карте
     const marker2 = L.marker([34.1805, -118.3092]).addTo(map);
     const popup2 = createVideoPopup("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", "hls", "Test Camera Mux");
     marker2.bindPopup(popup2);
 
-    // RTMP через HLS с собственного сервера (пример)
     const marker3 = L.marker([34.1802, -118.3094]).addTo(map);
     const popup3 = createVideoPopup("https://5.161.202.172/hls/camera1.m3u8", "hls", "RTMP Camera 1");
     marker3.bindPopup(popup3);
 
-    // ✅ Добавлена твоя рабочая камера
-    const marker4 = L.marker([34.1800, -118.3097]).addTo(map);
-    const popup4 = createVideoPopup("http://5.78.131.127/hls/TEST1.m3u8", "hls", "Zarcom RTMP Camera");
+    const marker4 = L.marker([34.1806, -118.3091]).addTo(map);
+    const popup4 = createVideoPopup("http://5.78.131.127/hls/TEST1.m3u8", "hls", "RTMP Camera TEST1");
     marker4.bindPopup(popup4);
   </script>
 </body>
