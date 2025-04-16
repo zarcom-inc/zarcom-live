@@ -88,10 +88,14 @@
     const popup3 = createVideoPopup("https://5.161.202.172/hls/camera1.m3u8", "hls", "RTMP Camera 1");
     marker3.bindPopup(popup3);
 
-    // ✅ Новый маркер рядом с остальными — твой рабочий HLS поток
     const marker4 = L.marker([34.1803, -118.3090]).addTo(map);
     const popup4 = createVideoPopup("http://5.78.131.127/hls/stream.m3u8", "hls", "RTMP Camera TEST1");
     marker4.bindPopup(popup4);
+
+    // Тестовый HLS от фейкового потока (проверка nginx + ffmpeg генерация)
+    const marker5 = L.marker([34.1806, -118.3087]).addTo(map);
+    const popup5 = createVideoPopup("http://5.78.131.127/hls/ARM1.m3u8", "hls", "RTMP Test Pattern");
+    marker5.bindPopup(popup5);
   </script>
 </body>
 </html>
