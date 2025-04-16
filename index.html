@@ -88,8 +88,9 @@
     const popup3 = createVideoPopup("https://5.161.202.172/hls/camera1.m3u8", "hls", "RTMP Camera 1");
     marker3.bindPopup(popup3);
 
-    const marker4 = L.marker([34.1806, -118.3091]).addTo(map);
-    const popup4 = createVideoPopup("http://5.78.131.127/hls/TEST1.m3u8", "hls", "RTMP Camera TEST1");
+    // ✅ Новый маркер рядом с остальными — твой рабочий HLS поток
+    const marker4 = L.marker([34.1803, -118.3090]).addTo(map);
+    const popup4 = createVideoPopup("http://5.78.131.127/hls/stream.m3u8", "hls", "RTMP Camera TEST1");
     marker4.bindPopup(popup4);
   </script>
 </body>
