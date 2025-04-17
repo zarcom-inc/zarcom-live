@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/hls/:path*",
+      "destination": "http://5.78.131.127:1937/hls/:path*"
+    }
+  ]
+}
