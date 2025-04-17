@@ -79,14 +79,14 @@
       return container;
     }
 
-    // Наш единственный маркер (Cam-1 office)
+    // Наш единственный маркер с цифрой 1
     const marker = L.marker([34.1808, -118.3089], { icon: redIcon }).addTo(map)
       .bindPopup(createVideoPopup(
         "/hls/ARM1.m3u8",
         "hls",
-        "Cam-1 office"
+        "1"
       ))
-      .bindTooltip('Cam-1 office', { permanent: true, direction: 'right', offset: [10, 0] });
+      .bindTooltip('1', { permanent: true, direction: 'right', offset: [10, 0] });
 
     // Авто‑плей видео при открытии попапа
     map.on('popupopen', function(e) {
