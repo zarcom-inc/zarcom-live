@@ -9,21 +9,13 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     html, body, #map {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
+      margin: 0; padding: 0; height: 100%; width: 100%;
     }
     .video-popup {
-      width: 300px;
-      height: 170px;
-      margin-bottom: 10px;
+      width: 300px; height: 170px; margin-bottom: 10px;
     }
     video, iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      border-radius: 8px;
+      width: 100%; height: 100%; border: none; border-radius: 8px;
     }
     .leaflet-popup-content-wrapper {
       max-width: 320px;
@@ -34,6 +26,7 @@
   <div id="map"></div>
 
   <script>
+    // Инициализируем карту
     const map = L.map('map').setView([34.1808, -118.3089], 16);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -41,6 +34,17 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
+    // Красный маркер для нашей камеры
+    const redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      shadowSize: [41, 41]
+    });
+
+    // Фабрика всплывашек с видео
     const createVideoPopup = (streamUrl, type = 'hls', label = '') => {
       const container = document.createElement('div');
       container.className = 'video-popup';
@@ -75,48 +79,43 @@
       return container;
     };
 
-    // Сторонние камеры оставляем без изменений
-    const marker1 = L.marker([34.1808, -118.3089]).addTo(map);
-    const popup1 = createVideoPopup(
-      "https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536/?lang=ru",
-      "iframe",
-      "Main Office Camera"
-    );
-    marker1.bindPopup(popup1);
+    // Старые камеры (как были)
+    L.marker([34.1808, -118.3089]).addTo(map)
+      .bindPopup(createVideoPopup(
+        "https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536/?lang=ru",
+        "iframe",
+        "Main Office Camera"
+      ));
 
-    const marker2 = L.marker([34.1805, -118.3092]).addTo(map);
-    const popup2 = createVideoPopup(
-      "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-      "hls",
-      "Test Camera Mux"
-    );
-    marker2.bindPopup(popup2);
+    L.marker([34.1805, -118.3092]).addTo(map)
+      .bindPopup(createVideoPopup(
+        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+        "hls",
+        "Test Camera Mux"
+      ));
 
-    // Наша камера
-    const marker3 = L.marker([34.1802, -118.3094]).addTo(map);
-    const popup3 = createVideoPopup(
-      "/hls/ARM1.m3u8",   // <-- относительный путь через vercel.json
-      "hls",
-      "Our Camera"
-    );
-    marker3.bindPopup(popup3);
+    // Наша камера — с красным маркером
+    L.marker([34.1802, -118.3094], { icon: redIcon }).addTo(map)
+      .bindPopup(createVideoPopup(
+        "/hls/ARM1.m3u8",
+        "hls",
+        "Our Camera"
+      ));
 
-    // Дополнительные тестовые маркеры при необходимости можно оставить или убрать
-    const marker4 = L.marker([34.1803, -118.3090]).addTo(map);
-    const popup4 = createVideoPopup(
-      "http://5.78.131.127:9000/app/test1/playlist.m3u8",
-      "hls",
-      "OvenMediaEngine TEST1"
-    );
-    marker4.bindPopup(popup4);
+    // Остальные тестовые
+    L.marker([34.1803, -118.3090]).addTo(map)
+      .bindPopup(createVideoPopup(
+        "http://5.78.131.127:9000/app/test1/playlist.m3u8",
+        "hls",
+        "OvenMediaEngine TEST1"
+      ));
 
-    const marker5 = L.marker([34.1807, -118.3090]).addTo(map);
-    const popup5 = createVideoPopup(
-      "http://5.161.202.172:8080/memfs/005f0a90-c16c-4dbe-bdbd-786d392f8331.m3u8",
-      "hls",
-      "OvenMediaEngine TEST2"
-    );
-    marker5.bindPopup(popup5);
+    L.marker([34.1807, -118.3090]).addTo(map)
+      .bindPopup(createVideoPopup(
+        "http://5.161.202.172:8080/memfs/005f0a90-c16c-4dbe-bdbd-786d392f8331.m3u8",
+        "hls",
+        "OvenMediaEngine TEST2"
+      ));
   </script>
 </body>
 </html>
