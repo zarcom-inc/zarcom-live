@@ -2,7 +2,9 @@
   "rewrites": [
     {
       "source": "/hls/:path*",
-      "destination": "http://5.78.131.127:1937/hls/:path*"
+      // Проксируем на HTTP-порт 80 (никогда не указываем 1937, 
+      // т.к. на нём только RTMP)
+      "destination": "http://5.78.131.127/hls/:path*"
     }
   ]
 }
