@@ -2,14 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zarcom Camera Streams</title>
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <title>Zarcom Cameras Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body, #map {
       margin: 0; padding: 0; height: 100%; width: 100%;
@@ -20,21 +18,25 @@
     video, iframe {
       width: 100%; height: 100%; border: none; border-radius: 8px;
     }
-    .leaflet-popup-content-wrapper { max-width: 320px; }
+    .leaflet-popup-content-wrapper {
+      max-width: 320px;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <script>
-    // инициализация карты
-    const map = L.map('map').setView([34.1808, -118.3089], 16);
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    // Инициализация карты
+    const map = L.map('map').setView([34.1808, -118.3089], 16);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // красный маркер
+    // Красный икон‑маркер
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -44,27 +46,20 @@
       shadowSize: [41, 41]
     });
 
-    // фабрика всплывашек с видео
-    function createVideoPopup(streamUrl, type = 'hls', label = '') {
+    // Фабрика всплывающих окон с видео
+    function createVideoPopup(streamUrl, type = 'hls') {
       const container = document.createElement('div');
       container.className = 'video-popup';
-
-      const title = document.createElement('div');
-      title.style.fontWeight = 'bold';
-      title.style.marginBottom = '5px';
-      title.textContent = label;
-      container.appendChild(title);
-
       if (type === 'iframe') {
         const iframe = document.createElement('iframe');
         iframe.src = streamUrl;
         iframe.allowFullscreen = true;
         container.appendChild(iframe);
       } else {
-        container.innerHTML += `
+        container.innerHTML = `
           <video controls autoplay muted playsinline>
             <source src="${streamUrl}" type="application/x-mpegURL">
-            Your browser does not support the video tag.
+            Ваш браузер не поддерживает видео.
           </video>
         `;
         const video = container.querySelector('video');
@@ -72,22 +67,28 @@
           const hls = new Hls();
           hls.loadSource(streamUrl);
           hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = streamUrl;
-          video.addEventListener('loadedmetadata', () => video.play());
         }
       }
       return container;
     }
 
-    // Marker 1 — поток ARM1
-    const marker1 = L.marker([34.1808, -118.3089], { icon: redIcon }).addTo(map);
-    marker1.bindPopup(createVideoPopup('/hls/ARM1.m3u8', 'hls', '1'));
+    // Камера 1
+    const marker1 = L.marker([34.1808, -118.3089], { icon: redIcon }).addTo(map)
+      .bindPopup(createVideoPopup('/hls/ARM1.m3u8', 'hls'))
+      .bindTooltip('1', { permanent: true, direction: 'right', offset: [10, 0] });
 
-    // Marker 2 — поток CAM2 (координаты подвинь по необходимости)
-    const marker2 = L.marker([34.1807, -118.3088], { icon: redIcon }).addTo(map);
-    marker2.bindPopup(createVideoPopup('/hls/CAM2.m3u8', 'hls', '2'));
+    // Камера 2
+    const marker2 = L.marker([34.1807, -118.3088], { icon: redIcon }).addTo(map)
+      .bindPopup(createVideoPopup('/hls/CAM2.m3u8', 'hls'))
+      .bindTooltip('2', { permanent: true, direction: 'right', offset: [10, 0] });
+
+    // Авто‑плей видео при открытии попапа
+    map.on('popupopen', function(e) {
+      const video = e.popup._contentNode.querySelector('video');
+      if (video) video.play().catch(() => {});
+    });
   </script>
 </body>
 </html>
