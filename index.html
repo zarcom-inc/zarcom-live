@@ -36,7 +36,7 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Красный икон‑маркер для нашей камеры
+    // Красный икон‑маркер
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -79,41 +79,12 @@
       return container;
     }
 
-    // Маркеры с камерами
-    L.marker([34.1808, -118.3089]).addTo(map)
-      .bindPopup(createVideoPopup(
-        "https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536/?lang=ru",
-        "iframe",
-        "Main Office Camera"
-      ));
-
-    L.marker([34.1805, -118.3092]).addTo(map)
-      .bindPopup(createVideoPopup(
-        "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-        "hls",
-        "Test Camera Mux"
-      ));
-
-    // Наша камера с красным маркером
-    L.marker([34.1802, -118.3094], { icon: redIcon }).addTo(map)
+    // Только наша камера
+    L.marker([34.1808, -118.3089], { icon: redIcon }).addTo(map)
       .bindPopup(createVideoPopup(
         "/hls/ARM1.m3u8",
         "hls",
-        "Our Camera"
-      ));
-
-    L.marker([34.1803, -118.3090]).addTo(map)
-      .bindPopup(createVideoPopup(
-        "http://5.78.131.127:9000/app/test1/playlist.m3u8",
-        "hls",
-        "OvenMediaEngine TEST1"
-      ));
-
-    L.marker([34.1807, -118.3090]).addTo(map)
-      .bindPopup(createVideoPopup(
-        "http://5.161.202.172:8080/memfs/005f0a90-c16c-4dbe-bdbd-786d392f8331.m3u8",
-        "hls",
-        "OvenMediaEngine TEST2"
+        "Cam-1 office"
       ));
 
     // Авто‑плей видео при открытии попапа
