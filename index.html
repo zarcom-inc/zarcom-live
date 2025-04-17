@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zarcom Cameras Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     html, body, #map {
       margin: 0; padding: 0; height: 100%; width: 100%;
@@ -25,16 +26,17 @@
 <body>
   <div id="map"></div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    // Инициализируем карту
+    // Инициализация карты
     const map = L.map('map').setView([34.1808, -118.3089], 16);
-
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Красный маркер для нашей камеры
+    // Красный икон‑маркер для нашей камеры
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -44,11 +46,10 @@
       shadowSize: [41, 41]
     });
 
-    // Фабрика всплывашек с видео
-    const createVideoPopup = (streamUrl, type = 'hls', label = '') => {
+    // Фабрика всплывающих окон с видео
+    function createVideoPopup(streamUrl, type = 'hls', label = '') {
       const container = document.createElement('div');
       container.className = 'video-popup';
-
       const title = document.createElement('div');
       title.style.fontWeight = 'bold';
       title.style.marginBottom = '5px';
@@ -65,8 +66,7 @@
           <video controls autoplay muted playsinline>
             <source src="${streamUrl}" type="application/x-mpegURL">
             Your browser does not support the video tag.
-          </video>
-        `;
+          </video>`;
         const video = container.querySelector('video');
         if (Hls.isSupported()) {
           const hls = new Hls();
@@ -77,9 +77,9 @@
         }
       }
       return container;
-    };
+    }
 
-    // Старые камеры (как были)
+    // Маркеры с камерами
     L.marker([34.1808, -118.3089]).addTo(map)
       .bindPopup(createVideoPopup(
         "https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536/?lang=ru",
@@ -94,7 +94,7 @@
         "Test Camera Mux"
       ));
 
-    // Наша камера — с красным маркером
+    // Наша камера с красным маркером
     L.marker([34.1802, -118.3094], { icon: redIcon }).addTo(map)
       .bindPopup(createVideoPopup(
         "/hls/ARM1.m3u8",
@@ -102,7 +102,6 @@
         "Our Camera"
       ));
 
-    // Остальные тестовые
     L.marker([34.1803, -118.3090]).addTo(map)
       .bindPopup(createVideoPopup(
         "http://5.78.131.127:9000/app/test1/playlist.m3u8",
@@ -116,6 +115,12 @@
         "hls",
         "OvenMediaEngine TEST2"
       ));
+
+    // Авто‑плей видео при открытии попапа
+    map.on('popupopen', function(e) {
+      const video = e.popup._contentNode.querySelector('video');
+      if (video) video.play().catch(() => {});
+    });
   </script>
 </body>
 </html>
