@@ -3,50 +3,120 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zarcom Camera Map</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <title>Zarcom Cameras Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
-    html, body {
+    html, body, #map {
       margin: 0;
       padding: 0;
       height: 100%;
+      width: 100%;
     }
-    #map {
+    .video-popup {
+      width: 300px;
+      height: 170px;
+      margin-bottom: 10px;
+    }
+    video, iframe {
       width: 100%;
       height: 100%;
+      border: none;
+      border-radius: 8px;
     }
-    .leaflet-popup-content iframe {
-      width: 300px;
-      height: 200px;
+    .leaflet-popup-content-wrapper {
+      max-width: 320px;
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([34.1834, -118.3122], 15); // Центр Burbank
+    const map = L.map('map').setView([34.1808, -118.3089], 16);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    const cameras = [
-      {
-        name: "Zarcom Office",
-        lat: 34.1834,
-        lng: -118.3122,
-        url: "https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536/?lang=ru"
-      }
-    ];
+    const createVideoPopup = (streamUrl, type = 'hls', label = '') => {
+      const container = document.createElement('div');
+      container.className = 'video-popup';
 
-    cameras.forEach(cam => {
-      const popupContent = `<b>${cam.name}</b><br><iframe src="${cam.url}" frameborder="0" allowfullscreen></iframe>`;
-      L.marker([cam.lat, cam.lng]).addTo(map).bindPopup(popupContent);
-    });
+      const title = document.createElement('div');
+      title.style.fontWeight = 'bold';
+      title.style.marginBottom = '5px';
+      title.textContent = label;
+      container.appendChild(title);
+
+      if (type === 'iframe') {
+        const iframe = document.createElement('iframe');
+        iframe.src = streamUrl;
+        iframe.allowFullscreen = true;
+        container.appendChild(iframe);
+      } else {
+        container.innerHTML += `
+          <video controls autoplay muted playsinline>
+            <source src="${streamUrl}" type="application/x-mpegURL">
+            Your browser does not support the video tag.
+          </video>
+        `;
+        const video = container.querySelector('video');
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(streamUrl);
+          hls.attachMedia(video);
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = streamUrl;
+        }
+      }
+      return container;
+    };
+
+    // Сторонние камеры оставляем без изменений
+    const marker1 = L.marker([34.1808, -118.3089]).addTo(map);
+    const popup1 = createVideoPopup(
+      "https://public.ivideon.com/camera/100-SYJQkrxIQlHzKBISTMN7tv/65536/?lang=ru",
+      "iframe",
+      "Main Office Camera"
+    );
+    marker1.bindPopup(popup1);
+
+    const marker2 = L.marker([34.1805, -118.3092]).addTo(map);
+    const popup2 = createVideoPopup(
+      "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+      "hls",
+      "Test Camera Mux"
+    );
+    marker2.bindPopup(popup2);
+
+    // Наша камера
+    const marker3 = L.marker([34.1802, -118.3094]).addTo(map);
+    const popup3 = createVideoPopup(
+      "/hls/ARM1.m3u8",   // <-- относительный путь через vercel.json
+      "hls",
+      "Our Camera"
+    );
+    marker3.bindPopup(popup3);
+
+    // Дополнительные тестовые маркеры при необходимости можно оставить или убрать
+    const marker4 = L.marker([34.1803, -118.3090]).addTo(map);
+    const popup4 = createVideoPopup(
+      "http://5.78.131.127:9000/app/test1/playlist.m3u8",
+      "hls",
+      "OvenMediaEngine TEST1"
+    );
+    marker4.bindPopup(popup4);
+
+    const marker5 = L.marker([34.1807, -118.3090]).addTo(map);
+    const popup5 = createVideoPopup(
+      "http://5.161.202.172:8080/memfs/005f0a90-c16c-4dbe-bdbd-786d392f8331.m3u8",
+      "hls",
+      "OvenMediaEngine TEST2"
+    );
+    marker5.bindPopup(popup5);
   </script>
 </body>
 </html>
-
