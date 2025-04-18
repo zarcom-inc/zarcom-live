@@ -17,11 +17,12 @@
       left: 10px;
       z-index: 1000;
       background: white;
-      padding: 6px 10px;
-      border-radius: 5px;
+      padding: 6px 14px;
+      border-radius: 20px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       width: 260px;
       font-size: 14px;
+      border: none;
     }
 
     #toggleMapBtn {
@@ -35,6 +36,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       font-size: 14px;
       cursor: pointer;
+      border: none;
     }
 
     #controls {
@@ -69,17 +71,22 @@
   <div id="map"></div>
 
   <div id="controls">
+    <button id="zoom-in">+</button>
+    <button id="zoom-out">−</button>
     <button id="locateBtn">📍</button>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    const map = L.map('map', { zoomControl: false }).setView([34.1808, -118.3089], 13);
+    const map = L.map('map').setView([34.1808, -118.3089], 13);
     const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
+
+    document.getElementById('zoom-in').onclick = () => map.zoomIn();
+    document.getElementById('zoom-out').onclick = () => map.zoomOut();
 
     document.getElementById('locateBtn').onclick = () => {
       if (navigator.geolocation) {
@@ -145,7 +152,7 @@
 
     const markers = [
       { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8' },
-      { id: 'BBQ YARD', address: '947 N Brand Blvd, Glendale, CA 91202', url: '/hls/cam5.m3u8' },
+      { id: 'BBQ', address: '947 N Brand Blvd, Glendale, CA 91202', url: '/hls/cam5.m3u8' },
       { id: 'BBQ', address: '950 N Brand Blvd, Glendale, CA 91202', url: '/hls/cam2.m3u8' },
       { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8' },
       { id: 'LALALAND', address: '1800 S Brand Blvd, Glendale, CA 91204', url: '/hls/cam4.m3u8' },
