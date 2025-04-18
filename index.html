@@ -39,6 +39,7 @@
       const container = document.createElement('div');
       container.className = 'video-popup';
       const video = document.createElement('video');
+      video.setAttribute('crossorigin', 'anonymous');
       video.controls = true;
       video.autoplay = false;
       video.muted = true;
@@ -47,6 +48,7 @@
       let hlsInstance = null;
 
       container.onPopupOpen = () => {
+        console.log('Popup open, start loading HLS');
         if (Hls.isSupported()) {
           hlsInstance = new Hls();
           hlsInstance.loadSource(streamUrl);
@@ -55,10 +57,13 @@
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = streamUrl;
           video.addEventListener('loadedmetadata', () => video.play(), { once: true });
+        } else {
+          container.innerHTML = '<p style="color:red; text-align:center">HLS не поддерживается.</p>';
         }
       };
 
       container.onPopupClose = () => {
+        console.log('Popup close, destroy HLS');
         if (hlsInstance) {
           hlsInstance.destroy();
           hlsInstance = null;
@@ -73,14 +78,15 @@
 
     // Камера 1
     const marker1 = L.marker([34.1808, -118.3089], { icon: greenIcon }).addTo(map);
-    const popup1 = createManagedPopup('http://5.78.131.127:8080/hls/cam1.m3u8');
+    const streamUrl = 'https://zarcom-live.vercel.app/hls/cam1.m3u8';
+    const popup1 = createManagedPopup(streamUrl);
     marker1.bindPopup(popup1)
            .bindTooltip('1', { permanent: true, direction: 'right', offset: [10, 0] });
     marker1.on('popupopen', () => popup1.onPopupOpen());
     marker1.on('popupclose', () => popup1.onPopupClose());
 
-    // Опционально: открыть попап сразу
-    // marker1.openPopup();
+    // Открываем попап автоматически
+    marker1.openPopup();
   </script>
 </body>
 </html>
