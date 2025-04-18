@@ -103,9 +103,10 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const map = L.map('map', { zoomControl: false }).setView([34.1808, -118.3089], 13);
-    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+    const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CartoDB</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
     }).addTo(map);
 
     document.getElementById('zoom-in').onclick = () => map.zoomIn();
