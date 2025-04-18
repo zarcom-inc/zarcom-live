@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/hls/:path*",
-      "destination": "http://5.78.131.127/hls/:path*"
+      "destination": "http://5.78.131.127:8080/hls/:path*"
     }
   ]
 }
