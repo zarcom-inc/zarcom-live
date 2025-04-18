@@ -7,8 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
-    .iframe-popup { width: 320px; height: 180px; margin: 0; padding: 0; }
-    .iframe-popup iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
+    .video-popup { width: 320px; height: 180px; }
     .leaflet-popup-content-wrapper { max-width: 340px; }
   </style>
 </head>
@@ -30,23 +29,35 @@
       iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
     });
 
-    // Фабрика попапа с iframe
+    // Создаёт контейнер с iframe
     function createIframePopup(url) {
       const container = document.createElement('div');
-      container.className = 'iframe-popup';
+      container.className = 'video-popup';
       const iframe = document.createElement('iframe');
       iframe.src = url;
       iframe.allow = 'autoplay; fullscreen';
+      iframe.style.border = 'none';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
       container.appendChild(iframe);
       return container;
     }
 
-    // Камера 1 (iframe с HLS-плеером на Nginx)
+    // Адрес плейера на Nginx
+    const streamPage = 'http://5.78.131.127:8080/';
+
+    // Создаём маркер и popup по требованию
     const marker1 = L.marker([34.1808, -118.3089], { icon: greenIcon }).addTo(map);
-    const popup1 = createIframePopup('http://5.78.131.127:8080/');
-    marker1.bindPopup(popup1)
-           .bindTooltip('1', { permanent: true, direction: 'right', offset: [10, 0] });
-    marker1.openPopup();
+    marker1.bindPopup(function() {
+      return createIframePopup(streamPage);
+    }, { maxWidth: 340, closeOnClick: true, autoClose: true });
+
+    // При закрытии всплытия iframe удаляется из DOM — поток останавливается
+    marker1.on('popupclose', () => {
+      // Ничего делать не нужно: Leaflet удалит DOM контейнера и iframe
+    });
+
+    // Камера не открывается автоматически. Пользователь нажимает на маркер, чтобы открыть.
   </script>
 </body>
 </html>
