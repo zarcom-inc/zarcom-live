@@ -103,7 +103,18 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // Existing camera and map functionality unchanged
+    const markers = [
+      { id: 'OFFICE', lat: 34.1808, lng: -118.3089, url: '/hls/cam1.m3u8' },
+      { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8' },
+      { id: '5STAR', lat: 34.2244, lng: -118.4511, url: '/hls/cam3.m3u8' },
+      { id: 'LALALAND', lat: 34.1262, lng: -118.2551, url: '/hls/cam4.m3u8' },
+      { id: "Trader Jo's", lat: 34.15995908795789, lng: -118.25430964670682, url: '/hls/cam5.m3u8' }
+    ];
+
+    markers.forEach(cam => {
+      const marker = L.marker([cam.lat, cam.lng]).addTo(map);
+      marker.bindPopup(`<video src="${cam.url}" controls muted playsinline width="300" height="170"></video>`).bindTooltip(cam.id);
+    });
 
     document.getElementById('locateBtn').addEventListener('click', () => {
       const userLatLng = [34.18386620224756, -118.30956393479859];
