@@ -5,17 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zarcom Camera Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Video.js CSS -->
+  <link href="https://unpkg.com/video.js/dist/video-js.min.css" rel="stylesheet" />
   <style>
     html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
     .video-popup { width: 320px; height: 180px; margin-bottom: 10px; }
-    video { width: 100%; height: 100%; border: none; border-radius: 8px; background: #000; }
     .leaflet-popup-content-wrapper { max-width: 340px; }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <!-- Video.js JS -->
+  <script src="https://unpkg.com/video.js/dist/video.min.js"></script>
   <script>
     // Инициализация карты
     const map = L.map('map').setView([34.1808, -118.3089], 16);
@@ -28,64 +30,51 @@
     const greenIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
     });
 
-    // Фабрика попапа с управлением потоком (для камеры 1)
-    function createManagedPopup(streamUrl) {
+    // Фабрика попапа с Video.js
+    function createVideoJsPopup(streamUrl, id) {
       const container = document.createElement('div');
       container.className = 'video-popup';
+      // Создаем video.js элемент
       const video = document.createElement('video');
-      video.setAttribute('crossorigin', 'anonymous');
-      video.controls = true;
-      video.autoplay = false;
-      video.muted = true;
-      video.playsInline = true;
+      video.id = id;
+      video.className = 'video-js vjs-fluid vjs-default-skin';
+      video.setAttribute('controls', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.setAttribute('preload', 'auto');
+      const source = document.createElement('source');
+      source.src = streamUrl;
+      source.type = 'application/x-mpegURL';
+      video.appendChild(source);
       container.appendChild(video);
-      let hlsInstance = null;
-
-      container.onPopupOpen = () => {
-        console.log('Popup open, start loading HLS');
-        if (Hls.isSupported()) {
-          hlsInstance = new Hls();
-          hlsInstance.loadSource(streamUrl);
-          hlsInstance.attachMedia(video);
-          hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = streamUrl;
-          video.addEventListener('loadedmetadata', () => video.play(), { once: true });
-        } else {
-          container.innerHTML = '<p style="color:red; text-align:center">HLS не поддерживается.</p>';
-        }
-      };
-
-      container.onPopupClose = () => {
-        console.log('Popup close, destroy HLS');
-        if (hlsInstance) {
-          hlsInstance.destroy();
-          hlsInstance = null;
-        }
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
-      };
-
       return container;
     }
 
     // Камера 1
     const marker1 = L.marker([34.1808, -118.3089], { icon: greenIcon }).addTo(map);
     const streamUrl = 'https://zarcom-live.vercel.app/hls/cam1.m3u8';
-    const popup1 = createManagedPopup(streamUrl);
-    marker1.bindPopup(popup1)
-           .bindTooltip('1', { permanent: true, direction: 'right', offset: [10, 0] });
-    marker1.on('popupopen', () => popup1.onPopupOpen());
-    marker1.on('popupclose', () => popup1.onPopupClose());
+    const popup1 = createVideoJsPopup(streamUrl, 'cam1_video');
+    marker1.bindPopup(popup1).bindTooltip('1', { permanent: true, direction: 'right', offset: [10, 0] });
 
-    // Открываем попап автоматически
+    marker1.on('popupopen', () => {
+      // Инициализация плеера
+      if (window.videojs) {
+        videojs('cam1_video', { autoplay: true, muted: true });
+      }
+    });
+    marker1.on('popupclose', () => {
+      // Дестрой плеера
+      if (window.videojs) {
+        const player = videojs('cam1_video');
+        player.pause();
+        player.dispose();
+      }
+    });
+
+    // Автоматическое открытие
     marker1.openPopup();
   </script>
 </body>
