@@ -80,14 +80,14 @@
 
     // Камера 1
     const marker1 = L.marker([34.1808, -118.3089], { icon: redIcon }).addTo(map);
-    const popup1 = createManagedPopup('/hls/ARM1.m3u8');
+    const popup1 = createManagedPopup('/hls/cam1.m3u8');
     marker1.bindPopup(popup1).bindTooltip('1', { permanent: true, direction: 'right', offset: [10, 0] });
     marker1.on('popupopen',  () => popup1.onPopupOpen());
     marker1.on('popupclose', () => popup1.onPopupClose());
 
     // Камера 2
     const marker2 = L.marker([34.1807, -118.3088], { icon: redIcon }).addTo(map);
-    const popup2  = createVideoPopup('/hls/CAM2.m3u8');
+    const popup2 = createVideoPopup('/hls/cam2.m3u8');
     marker2.bindPopup(popup2).bindTooltip('2', { permanent: true, direction: 'right', offset: [10, 0] });
   </script>
 </body>
