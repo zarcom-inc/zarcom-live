@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,7 +20,7 @@
       border-radius: 5px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
-    #searchBox { top: 10px; width: 220px; text-align: center; }
+    #searchBox { top: 10px; width: 240px; text-align: center; }
     #toggleMapBtn { top: 50px; cursor: pointer; }
   </style>
 </head>
@@ -32,7 +32,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    const map = L.map('map').setView([34.1808, -118.3089], 16);
+    const map = L.map('map').setView([34.1808, -118.3089], 13);
     const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
@@ -73,28 +73,36 @@
     }
 
     const markers = [
-      { id: 'Офис', lat: 34.1812, lng: -118.3095, url: '/hls/cam1.m3u8' },
-      { id: 'BBQ', lat: 34.1800, lng: -118.3080, url: '/hls/cam2.m3u8' },
-      { id: '5star', lat: 34.1790, lng: -118.3098, url: '/hls/cam3.m3u8' }
+      { id: 'Офис', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8' },
+      { id: 'BBQ', address: '946 N Brand Blvd, Glendale, CA 91202', url: '/hls/cam2.m3u8' },
+      { id: '5star', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8' }
     ];
 
-    const markerRefs = [];
-    let lastOpenedMarker = null;
+    const geocoder = async (address) => {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data && data.length > 0) {
+        return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      } else {
+        console.warn(`Не удалось получить координаты для: ${address}`);
+        return [0, 0];
+      }
+    };
 
-    markers.forEach(cam => {
-      const marker = L.marker([cam.lat, cam.lng], { icon: greenIcon }).addTo(map);
-      const popup = createManagedPopup(cam.url);
-      marker.bindPopup(popup).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
-      marker.on('popupopen', () => {
-        if (lastOpenedMarker && lastOpenedMarker !== marker) {
-          lastOpenedMarker.closePopup();
-        }
-        popup.onPopupOpen();
-        lastOpenedMarker = marker;
-      });
-      marker.on('popupclose', () => popup.onPopupClose());
-      markerRefs.push({ marker, id: cam.id });
-    });
+    const markerRefs = [];
+
+    (async () => {
+      for (const cam of markers) {
+        const [lat, lng] = await geocoder(cam.address);
+        const marker = L.marker([lat, lng], { icon: greenIcon }).addTo(map);
+        const popup = createManagedPopup(cam.url);
+        marker.bindPopup(popup).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
+        marker.on('popupopen',  () => popup.onPopupOpen());
+        marker.on('popupclose', () => popup.onPopupClose());
+        markerRefs.push({ marker, id: cam.id });
+      }
+    })();
 
     document.getElementById('searchBox').addEventListener('input', function() {
       const value = this.value.trim().toLowerCase();
