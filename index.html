@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,34 +10,23 @@
     .video-popup { width: 300px; height: 170px; margin-bottom: 10px; }
     video, iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
     .leaflet-popup-content-wrapper { max-width: 320px; }
-    #searchBox {
+    #searchBox, #toggleMapBtn {
       position: absolute;
-      top: 10px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 1000;
       background: white;
-      padding: 5px;
+      padding: 6px 10px;
       border-radius: 5px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
-    #toggleMapBtn {
-      position: absolute;
-      top: 50px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      background: white;
-      padding: 5px 10px;
-      border-radius: 5px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      cursor: pointer;
-    }
+    #searchBox { top: 10px; width: 220px; text-align: center; }
+    #toggleMapBtn { top: 50px; cursor: pointer; }
   </style>
 </head>
 <body>
-  <input type="text" id="searchBox" placeholder="Search camera by number..." />
-  <button id="toggleMapBtn">Toggle Map</button>
+  <input type="text" id="searchBox" placeholder="🔍 Поиск камеры по названию..." />
+  <button id="toggleMapBtn">Скрыть карту</button>
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -84,26 +73,33 @@
     }
 
     const markers = [
-      { id: '1', lat: 34.1812, lng: -118.3095, url: '/hls/cam1.m3u8' },
-      { id: '2', lat: 34.1800, lng: -118.3080, url: '/hls/cam2.m3u8' },
-      { id: '3', lat: 34.1790, lng: -118.3098, url: '/hls/cam3.m3u8' }
+      { id: 'Офис', lat: 34.1812, lng: -118.3095, url: '/hls/cam1.m3u8' },
+      { id: 'BBQ', lat: 34.1800, lng: -118.3080, url: '/hls/cam2.m3u8' },
+      { id: '5star', lat: 34.1790, lng: -118.3098, url: '/hls/cam3.m3u8' }
     ];
 
     const markerRefs = [];
+    let lastOpenedMarker = null;
 
     markers.forEach(cam => {
       const marker = L.marker([cam.lat, cam.lng], { icon: greenIcon }).addTo(map);
       const popup = createManagedPopup(cam.url);
       marker.bindPopup(popup).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
-      marker.on('popupopen',  () => popup.onPopupOpen());
+      marker.on('popupopen', () => {
+        if (lastOpenedMarker && lastOpenedMarker !== marker) {
+          lastOpenedMarker.closePopup();
+        }
+        popup.onPopupOpen();
+        lastOpenedMarker = marker;
+      });
       marker.on('popupclose', () => popup.onPopupClose());
       markerRefs.push({ marker, id: cam.id });
     });
 
     document.getElementById('searchBox').addEventListener('input', function() {
-      const value = this.value.trim();
+      const value = this.value.trim().toLowerCase();
       markerRefs.forEach(({ marker, id }) => {
-        if (id === value) {
+        if (id.toLowerCase().includes(value)) {
           marker.openPopup();
           map.setView(marker.getLatLng(), 18);
         }
@@ -113,10 +109,10 @@
     document.getElementById('toggleMapBtn').addEventListener('click', function() {
       if (map.hasLayer(tileLayer)) {
         map.removeLayer(tileLayer);
-        this.textContent = 'Show Map';
+        this.textContent = 'Показать карту';
       } else {
         tileLayer.addTo(map);
-        this.textContent = 'Hide Map';
+        this.textContent = 'Скрыть карту';
       }
     });
   </script>
