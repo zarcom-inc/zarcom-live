@@ -146,8 +146,10 @@
       const app = document.getElementById('appName').value;
       const streamId = document.getElementById('streamId').value;
       if (lastClickedLatLng && ip && port && app && streamId) {
+        const streamUrl = `rtmp://${ip}:${port}/${app}/${streamId}`;
         const marker = L.marker(lastClickedLatLng).addTo(map);
-        marker.bindPopup(`rtmp://${ip}:${port}/${app}/${streamId}`).openPopup();
+        const popup = createManagedPopup(streamUrl);
+        marker.bindPopup(popup);
         document.getElementById('add-camera-form').style.display = 'none';
         addCameraMode = false;
       }
@@ -163,7 +165,37 @@
       }
     });
 
-    // Вернём существующие камеры
+    function createManagedPopup(streamUrl) {
+      const container = document.createElement('div');
+      container.className = 'video-popup';
+      const video = document.createElement('video');
+      video.controls = true;
+      video.autoplay = false;
+      video.muted = true;
+      video.playsInline = true;
+      container.appendChild(video);
+      let hlsInstance = null;
+
+      container.onPopupOpen = () => {
+        if (Hls.isSupported()) {
+          hlsInstance = new Hls();
+          hlsInstance.loadSource(streamUrl);
+          hlsInstance.attachMedia(video);
+          hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else {
+          video.src = streamUrl;
+          video.addEventListener('loadedmetadata', () => video.play(), { once: true });
+        }
+      };
+      container.onPopupClose = () => {
+        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+      };
+      return container;
+    }
+
     const existingCams = [
       { id: 'OFFICE', lat: 34.1811, lng: -118.3089, url: '/hls/cam1.m3u8' },
       { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8' },
@@ -182,16 +214,10 @@
 
     existingCams.forEach((cam) => {
       const marker = L.marker([cam.lat, cam.lng], { icon: redIcon }).addTo(map);
-      const popup = document.createElement('div');
-      popup.className = 'video-popup';
-      const video = document.createElement('video');
-      video.controls = true; video.autoplay = false; video.muted = true; video.playsInline = true;
-      const source = document.createElement('source');
-      source.src = cam.url;
-      source.type = 'application/x-mpegURL';
-      video.appendChild(source);
-      popup.appendChild(video);
-      marker.bindPopup(popup);
+      const popup = createManagedPopup(cam.url);
+      marker.bindPopup(popup).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
+      marker.on('popupopen', () => popup.onPopupOpen());
+      marker.on('popupclose', () => popup.onPopupClose());
       markerRefs.push({ marker, id: cam.id });
     });
 
