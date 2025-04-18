@@ -22,13 +22,13 @@
     }
     #searchBox { top: 10px; width: 260px; text-align: center; font-size: 14px; }
     #toggleMapBtn { top: 50px; cursor: pointer; font-size: 14px; }
-    #locateBtn { top: 90px; cursor: pointer; font-size: 14px; }
+    #locateBtn { top: 90px; cursor: pointer; font-size: 14px; left: unset; right: 10px; transform: none; }
   </style>
 </head>
 <body>
   <input type="text" id="searchBox" placeholder="Поиск камеры (например: office)" />
   <button id="toggleMapBtn">Скрыть карту</button>
-  <button id="locateBtn">📍 Моё местоположение</button>
+  <button id="locateBtn">📍</button>
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
