@@ -68,6 +68,12 @@
     marker2.bindPopup(popup2).bindTooltip('2', { permanent: true, direction: 'right', offset: [10, 0] });
     marker2.on('popupopen',  () => popup2.onPopupOpen());
     marker2.on('popupclose', () => popup2.onPopupClose());
+
+    const marker3 = L.marker([34.1804, -118.3085], { icon: greenIcon }).addTo(map);
+    const popup3 = createManagedPopup('/hls/cam3.m3u8');
+    marker3.bindPopup(popup3).bindTooltip('3', { permanent: true, direction: 'right', offset: [10, 0] });
+    marker3.on('popupopen',  () => popup3.onPopupOpen());
+    marker3.on('popupclose', () => popup3.onPopupClose());
   </script>
 </body>
 </html>
