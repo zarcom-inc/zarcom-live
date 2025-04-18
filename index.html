@@ -10,7 +10,7 @@
     .video-popup { width: 300px; height: 170px; margin-bottom: 10px; }
     video, iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
     .leaflet-popup-content-wrapper { max-width: 320px; }
-    #searchBox, #toggleMapBtn {
+    #searchBox, #toggleMapBtn, #locateBtn {
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
@@ -22,11 +22,13 @@
     }
     #searchBox { top: 10px; width: 260px; text-align: center; font-size: 14px; }
     #toggleMapBtn { top: 50px; cursor: pointer; font-size: 14px; }
+    #locateBtn { top: 90px; cursor: pointer; font-size: 14px; }
   </style>
 </head>
 <body>
   <input type="text" id="searchBox" placeholder="Поиск камеры (например: office)" />
   <button id="toggleMapBtn">Скрыть карту</button>
+  <button id="locateBtn">📍 Моё местоположение</button>
   <div id="map"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -74,7 +76,8 @@
 
     const markers = [
       { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8' },
-      { id: 'BBQ', address: '946 N Brand Blvd, Glendale, CA 91202', url: '/hls/cam2.m3u8' },
+      { id: 'BBQ YARD', address: '947 N Brand Blvd, Glendale, CA 91202', url: '/hls/cam5.m3u8' },
+      { id: 'BBQ', address: '950 N Brand Blvd, Glendale, CA 91202', url: '/hls/cam2.m3u8' },
       { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8' },
       { id: 'LALALAND', address: '1800 S Brand Blvd, Glendale, CA 91204', url: '/hls/cam4.m3u8' }
     ];
@@ -122,6 +125,26 @@
       } else {
         tileLayer.addTo(map);
         this.textContent = 'Скрыть карту';
+      }
+    });
+
+    document.getElementById('locateBtn').addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          const userLatLng = [position.coords.latitude, position.coords.longitude];
+          L.marker(userLatLng, {
+            icon: L.icon({
+              iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png',
+              iconSize: [25, 25],
+              iconAnchor: [12, 12]
+            })
+          }).addTo(map).bindTooltip("Вы здесь", { permanent: false });
+          map.setView(userLatLng, 16);
+        }, () => {
+          alert("Не удалось определить местоположение.");
+        });
+      } else {
+        alert("Геолокация не поддерживается в этом браузере.");
       }
     });
   </script>
