@@ -11,18 +11,31 @@
     video, iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
     .leaflet-popup-content-wrapper { max-width: 320px; }
 
-    #searchBox {
+    .search-wrapper {
       position: absolute;
       top: 10px;
       left: 10px;
       z-index: 1000;
+      display: flex;
+      align-items: center;
       background: white;
-      padding: 10px 20px;
+      padding: 6px 14px;
       border-radius: 24px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      width: 300px;
+      width: 320px;
+    }
+
+    .search-wrapper input {
+      flex: 1;
       font-size: 16px;
       border: none;
+      outline: none;
+    }
+
+    .search-wrapper .icon {
+      font-size: 18px;
+      margin-right: 8px;
+      color: #555;
     }
 
     #toggleMapBtn {
@@ -65,7 +78,10 @@
   </style>
 </head>
 <body>
-  <input type="text" id="searchBox" placeholder="Поиск камеры (например: office)" />
+  <div class="search-wrapper">
+    <span class="icon">🔍</span>
+    <input type="text" id="searchBox" placeholder="Поиск камеры (например: office)" />
+  </div>
   <button id="toggleMapBtn">Скрыть карту</button>
 
   <div id="map"></div>
