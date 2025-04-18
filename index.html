@@ -105,21 +105,15 @@
     document.getElementById('zoom-out').onclick = () => map.zoomOut();
 
     document.getElementById('locateBtn').onclick = () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-          const userLatLng = [position.coords.latitude, position.coords.longitude];
-          L.marker(userLatLng, {
-            icon: L.icon({
-              iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png',
-              iconSize: [25, 25],
-              iconAnchor: [12, 12]
-            })
-          }).addTo(map).bindTooltip("Вы здесь", { permanent: false });
-          map.setView(userLatLng, 16);
-        }, () => alert("Не удалось определить местоположение."));
-      } else {
-        alert("Геолокация не поддерживается в этом браузере.");
-      }
+      const userLatLng = [34.18386620224756, -118.30956393479859];
+      L.marker(userLatLng, {
+        icon: L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png',
+          iconSize: [25, 25],
+          iconAnchor: [12, 12]
+        })
+      }).addTo(map).bindTooltip("Вы здесь", { permanent: false });
+      map.setView(userLatLng, 16);
     };
 
     document.getElementById('toggleMapBtn').onclick = () => {
