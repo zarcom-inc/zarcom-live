@@ -25,7 +25,7 @@
   </style>
 </head>
 <body>
-  <input type="text" id="searchBox" placeholder="🔍 Поиск камеры по названию..." />
+  <input type="text" id="searchBox" placeholder="🔍 Поиск камеры по названию... (например: office)" />
   <button id="toggleMapBtn">Скрыть карту</button>
   <div id="map"></div>
 
@@ -33,13 +33,13 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const map = L.map('map').setView([34.1808, -118.3089], 13);
-    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    const greenIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    const blueIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
     });
@@ -73,8 +73,8 @@
     }
 
     const markers = [
-      { id: 'Офис', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8' },
-      { id: 'BBQ', address: '946 N Brand Blvd, Glendale, CA 91202', url: '/hls/cam2.m3u8' },
+      { id: 'office', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8' },
+      { id: 'bbq', address: '946 N Brand Blvd, Glendale, CA 91202', url: '/hls/cam2.m3u8' },
       { id: '5star', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8' }
     ];
 
@@ -95,7 +95,7 @@
     (async () => {
       for (const cam of markers) {
         const [lat, lng] = await geocoder(cam.address);
-        const marker = L.marker([lat, lng], { icon: greenIcon }).addTo(map);
+        const marker = L.marker([lat, lng], { icon: blueIcon }).addTo(map);
         const popup = createManagedPopup(cam.url);
         marker.bindPopup(popup).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
         marker.on('popupopen',  () => popup.onPopupOpen());
