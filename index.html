@@ -5,16 +5,136 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zarcom Cameras Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
+    .video-popup { width: 300px; height: 170px; margin-bottom: 10px; }
+    video, iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
+    .leaflet-popup-content-wrapper { max-width: 320px; }
+
+    .top-bar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1100;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      background: white;
+      padding: 10px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .top-bar input.search-box {
+      padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      flex: 1;
+    }
+
+    .top-bar .filter-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 16px;
+      background: #eee;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #toggleMapBtn {
+      position: absolute;
+      top: 130px;
+      left: 10px;
+      z-index: 1000;
+      background: white;
+      padding: 6px 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+    }
+
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #controls button {
+      width: 40px;
+      height: 40px;
+      background-color: white;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.2);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      font-size: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #controls button:hover { background-color: #f1f1f1; }
+
+    .camera-form, #logoutBtn {
+      display: none;
+    }
+
+    #loginBox {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      z-index: 2000;
+    }
+
+    #loginBox input {
+      display: block;
+      margin-bottom: 10px;
+      padding: 8px;
+      width: 200px;
+    }
+
+    #loginBox button {
+      padding: 8px 14px;
+      background: #28a745;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #logoutBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #dc3545;
+      color: white;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 1100;
+    }
+  </style>
 </head>
 <body>
   <div id="loginBox">
+    <h3>Login</h3>
     <input type="text" id="username" placeholder="Username">
     <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Login</button>
   </div>
 
-  <button id="logoutBtn" onclick="logout()" style="display:none;position:absolute;top:10px;right:10px;z-index:999;background:red;color:white;padding:6px 12px;border:none;border-radius:5px;cursor:pointer">Logout</button>
-  <button id="addCameraBtn" onclick="enableAddCameraMode()" style="display:none;position:absolute;top:10px;right:110px;z-index:999;background:green;color:white;padding:6px 12px;border:none;border-radius:5px;cursor:pointer">Добавить камеру</button>
+  <button id="logoutBtn" onclick="logout()">Logout</button>
 
   <div class="top-bar">
     <input type="text" id="searchBox" class="search-box" placeholder="Поиск камеры (например кафе)">
@@ -32,76 +152,16 @@
     <button id="zoom-out">−</button>
     <button id="locateBtn">📍</button>
   </div>
+  <div class="camera-form" id="cameraForm">
+    <input type="text" id="camTitle" placeholder="Camera Name">
+    <input type="text" id="camStream" placeholder="RTMP or HLS URL">
+    <button onclick="addCamera()">Add Camera</button>
+  </div>
 
-  <style>
-    html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
-    .top-bar {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1100;
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      background: white;
-      padding: 10px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    }
-    .search-box {
-      padding: 8px 12px;
-      font-size: 14px;
-      border-radius: 20px;
-      border: 1px solid #ccc;
-      flex: 1;
-    }
-    .filter-btn {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 16px;
-      background: #eee;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    #toggleMapBtn {
-      position: absolute;
-      top: 130px;
-      left: 10px;
-      z-index: 1000;
-      background: white;
-      padding: 6px 10px;
-      border-radius: 5px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      font-size: 14px;
-      cursor: pointer;
-      border: none;
-    }
-    #controls {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    #controls button {
-      width: 40px;
-      height: 40px;
-      background-color: white;
-      border-radius: 50%;
-      border: 1px solid rgba(0,0,0,0.2);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      font-size: 20px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    #controls button:hover { background-color: #f1f1f1; }
-  </style>
-
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     let isLoggedIn = false;
-    let addCameraMode = false;
 
     function login() {
       const user = document.getElementById('username').value;
@@ -110,7 +170,6 @@
         isLoggedIn = true;
         document.getElementById('loginBox').style.display = 'none';
         document.getElementById('logoutBtn').style.display = 'block';
-        document.getElementById('addCameraBtn').style.display = 'block';
       } else {
         alert('Неверный логин или пароль');
       }
@@ -119,14 +178,73 @@
     function logout() {
       isLoggedIn = false;
       document.getElementById('logoutBtn').style.display = 'none';
-      document.getElementById('addCameraBtn').style.display = 'none';
       document.getElementById('loginBox').style.display = 'block';
     }
 
-    function enableAddCameraMode() {
+    const map = L.map('map', { zoomControl: false }).setView([34.1808, -118.3089], 13);
+    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
+
+    let selectedLatLng = null;
+
+    map.on('click', function(e) {
       if (!isLoggedIn) return;
-      addCameraMode = !addCameraMode;
-      alert(addCameraMode ? 'Режим добавления камеры включен. Кликните по карте.' : 'Режим добавления камеры отключен.');
+      selectedLatLng = e.latlng;
+      const form = document.getElementById('cameraForm');
+      form.style.display = 'flex';
+      form.style.top = `${e.originalEvent.clientY}px`;
+      form.style.left = `${e.originalEvent.clientX}px`;
+    });
+
+    function createManagedPopup(streamUrl) {
+      const container = document.createElement('div');
+      container.className = 'video-popup';
+      const video = document.createElement('video');
+      video.controls = true; video.autoplay = false; video.muted = true; video.playsInline = true;
+      container.appendChild(video);
+      let hlsInstance = null;
+
+      container.onPopupOpen = () => {
+        if (Hls.isSupported()) {
+          hlsInstance = new Hls();
+          hlsInstance.loadSource(streamUrl);
+          hlsInstance.attachMedia(video);
+          hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        } else {
+          video.src = streamUrl;
+          video.addEventListener('loadedmetadata', () => video.play(), { once: true });
+        }
+      };
+      container.onPopupClose = () => {
+        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+      };
+      return container;
+    }
+
+    function addCamera() {
+      const name = document.getElementById('camTitle').value.trim();
+      const url = document.getElementById('camStream').value.trim();
+      const form = document.getElementById('cameraForm');
+      form.style.display = 'none';
+
+      if (!name || !url || !selectedLatLng) return;
+
+      const popup = createManagedPopup(url);
+      const marker = L.marker([selectedLatLng.lat, selectedLatLng.lng], { icon: redIcon }).addTo(map);
+      marker.bindPopup(popup).bindTooltip(name, { permanent: true, direction: 'right', offset: [10, 0] });
+      marker.on('popupopen', () => popup.onPopupOpen());
+      marker.on('popupclose', () => popup.onPopupClose());
     }
   </script>
 </body>
