@@ -103,6 +103,7 @@
     <input type="text" id="port" placeholder="Port">
     <input type="text" id="appName" placeholder="App Name">
     <input type="text" id="streamId" placeholder="Stream ID">
+    <input type="text" id="streamLabel" placeholder="Label (название)">
     <button onclick="submitCameraForm()">OK</button>
   </div>
 
@@ -120,6 +121,7 @@
     let isLoggedIn = false;
     let addCameraMode = false;
     let lastClickedLatLng = null;
+    const markerRefs = [];
 
     function login() {
       const user = document.getElementById('username').value;
@@ -145,11 +147,28 @@
       const port = document.getElementById('port').value;
       const app = document.getElementById('appName').value;
       const streamId = document.getElementById('streamId').value;
+      const label = document.getElementById('streamLabel').value || 'CAM';
       if (lastClickedLatLng && ip && port && app && streamId) {
-        const streamUrl = `rtmp://${ip}:${port}/${app}/${streamId}`;
-        const marker = L.marker(lastClickedLatLng).addTo(map);
-        const popup = createManagedPopup(streamUrl);
-        marker.bindPopup(popup);
+        const streamUrl = `http://${ip}:${port}/${app}/${streamId}.m3u8`;
+        const newCam = {
+          id: label,
+          lat: lastClickedLatLng.lat,
+          lng: lastClickedLatLng.lng,
+          url: streamUrl
+        };
+        fetch('http://5.78.131.127:3000/api/cameras', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newCam)
+        }).then(res => res.json()).then(resp => {
+          if (resp.success) {
+            const marker = L.marker([newCam.lat, newCam.lng]).addTo(map);
+            const popup = createManagedPopup(newCam.url);
+            marker.bindPopup(popup).bindTooltip(newCam.id, { permanent: true, direction: 'right', offset: [10, 0] });
+            marker.on('popupopen', () => popup.onPopupOpen());
+            marker.on('popupclose', () => popup.onPopupClose());
+          }
+        });
         document.getElementById('add-camera-form').style.display = 'none';
         addCameraMode = false;
       }
@@ -196,30 +215,18 @@
       return container;
     }
 
-    const existingCams = [
-      { id: 'OFFICE', lat: 34.1811, lng: -118.3089, url: '/hls/cam1.m3u8' },
-      { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8' },
-      { id: '5STAR', lat: 34.202, lng: -118.449, url: '/hls/cam3.m3u8' },
-      { id: 'LALALAND', lat: 34.1408, lng: -118.255, url: '/hls/cam4.m3u8' },
-      { id: "Trader Jo's", lat: 34.1599, lng: -118.2543, url: '/hls/cam5.m3u8' }
-    ];
-
-    const redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-    });
-
-    const markerRefs = [];
-
-    existingCams.forEach((cam) => {
-      const marker = L.marker([cam.lat, cam.lng], { icon: redIcon }).addTo(map);
-      const popup = createManagedPopup(cam.url);
-      marker.bindPopup(popup).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
-      marker.on('popupopen', () => popup.onPopupOpen());
-      marker.on('popupclose', () => popup.onPopupClose());
-      markerRefs.push({ marker, id: cam.id });
-    });
+    fetch('http://5.78.131.127:3000/api/cameras')
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(cam => {
+          const marker = L.marker([cam.lat, cam.lng]).addTo(map);
+          const popup = createManagedPopup(cam.url);
+          marker.bindPopup(popup).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
+          marker.on('popupopen', () => popup.onPopupOpen());
+          marker.on('popupclose', () => popup.onPopupClose());
+          markerRefs.push({ marker, id: cam.id });
+        });
+      });
 
     document.getElementById('searchBox').addEventListener('input', function() {
       const value = this.value.trim().toLowerCase();
