@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zarcom Cameras Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
   <div id="loginBox">
@@ -102,6 +103,27 @@
   <script>
     let isLoggedIn = false;
     let addCameraMode = false;
+
+    const map = L.map('map').setView([34.1808, -118.3089], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    document.getElementById('zoom-in').onclick = () => map.zoomIn();
+    document.getElementById('zoom-out').onclick = () => map.zoomOut();
+
+    document.getElementById('locateBtn').onclick = () => {
+      const userLatLng = [34.18386620224756, -118.30956393479859];
+      L.marker(userLatLng, {
+        icon: L.icon({
+          iconUrl: 'https://cdn-icons-png.flaticon.com/512/64/64113.png',
+          iconSize: [25, 25],
+          iconAnchor: [12, 12]
+        })
+      }).addTo(map).bindTooltip("Вы здесь", { permanent: false });
+      map.setView(userLatLng, 16);
+    };
 
     function login() {
       const user = document.getElementById('username').value;
