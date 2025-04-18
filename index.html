@@ -5,12 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Zarcom Cameras Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+  <div id="loginBox">
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+
+  <button id="logoutBtn" onclick="logout()" style="display:none;position:absolute;top:10px;right:10px;z-index:999;background:red;color:white;padding:6px 12px;border:none;border-radius:5px;cursor:pointer">Logout</button>
+  <button id="addCameraBtn" onclick="enableAddCameraMode()" style="display:none;position:absolute;top:10px;right:110px;z-index:999;background:green;color:white;padding:6px 12px;border:none;border-radius:5px;cursor:pointer">Добавить камеру</button>
+
+  <div class="top-bar">
+    <input type="text" id="searchBox" class="search-box" placeholder="Поиск камеры (например кафе)">
+    <button class="filter-btn" data-type="food">🍔 Еда</button>
+    <button class="filter-btn" data-type="parking">🅿️ Паркинги</button>
+    <button class="filter-btn" data-type="gas">⛽ Заправки</button>
+    <button class="filter-btn" data-type="laundry">🧺 Прачечные</button>
+    <button class="filter-btn" data-type="building">🏢 Билдинги</button>
+    <button class="filter-btn" data-type="ev">🔌 Зарядки</button>
+  </div>
+  <button id="toggleMapBtn">Скрыть карту</button>
+  <div id="map"></div>
+  <div id="controls">
+    <button id="zoom-in">+</button>
+    <button id="zoom-out">−</button>
+    <button id="locateBtn">📍</button>
+  </div>
+
   <style>
     html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
-    .video-popup { width: 300px; height: 170px; margin-bottom: 10px; }
-    video, iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
-    .leaflet-popup-content-wrapper { max-width: 320px; }
-
     .top-bar {
       position: absolute;
       top: 10px;
@@ -24,16 +48,14 @@
       border-radius: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
-
-    .top-bar input.search-box {
+    .search-box {
       padding: 8px 12px;
       font-size: 14px;
       border-radius: 20px;
       border: 1px solid #ccc;
       flex: 1;
     }
-
-    .top-bar .filter-btn {
+    .filter-btn {
       padding: 6px 12px;
       border: none;
       border-radius: 16px;
@@ -41,7 +63,6 @@
       cursor: pointer;
       font-size: 14px;
     }
-
     #toggleMapBtn {
       position: absolute;
       top: 130px;
@@ -55,7 +76,6 @@
       cursor: pointer;
       border: none;
     }
-
     #controls {
       position: absolute;
       bottom: 20px;
@@ -65,7 +85,6 @@
       flex-direction: column;
       gap: 8px;
     }
-
     #controls button {
       width: 40px;
       height: 40px;
@@ -77,71 +96,12 @@
       cursor: pointer;
       transition: background-color 0.3s;
     }
-
     #controls button:hover { background-color: #f1f1f1; }
-
-    .camera-form, #logoutBtn, #editModeBtn {
-      display: none;
-    }
-
-    #loginBox {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: white;
-      padding: 12px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-      z-index: 2000;
-    }
-
-    #loginBox input {
-      display: block;
-      margin-bottom: 6px;
-      padding: 6px;
-      width: 180px;
-      font-size: 14px;
-    }
-
-    #loginBox button {
-      padding: 6px 12px;
-      background: #28a745;
-      border: none;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #logoutBtn, #editModeBtn {
-      position: absolute;
-      top: 10px;
-      z-index: 2100;
-      background: #007bff;
-      color: white;
-      padding: 6px 12px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #logoutBtn { right: 10px; background: #dc3545; }
-    #editModeBtn { right: 100px; }
   </style>
-</head>
-<body>
-  <div id="loginBox">
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-  </div>
 
-  <button id="logoutBtn" onclick="logout()">Logout</button>
-  <button id="editModeBtn" onclick="toggleEditMode()">Редактировать камеры</button>
-
-  <!-- остальная разметка остаётся без изменений -->
   <script>
     let isLoggedIn = false;
-    let editMode = false;
+    let addCameraMode = false;
 
     function login() {
       const user = document.getElementById('username').value;
@@ -150,7 +110,7 @@
         isLoggedIn = true;
         document.getElementById('loginBox').style.display = 'none';
         document.getElementById('logoutBtn').style.display = 'block';
-        document.getElementById('editModeBtn').style.display = 'block';
+        document.getElementById('addCameraBtn').style.display = 'block';
       } else {
         alert('Неверный логин или пароль');
       }
@@ -158,25 +118,16 @@
 
     function logout() {
       isLoggedIn = false;
-      editMode = false;
       document.getElementById('logoutBtn').style.display = 'none';
-      document.getElementById('editModeBtn').style.display = 'none';
+      document.getElementById('addCameraBtn').style.display = 'none';
       document.getElementById('loginBox').style.display = 'block';
     }
 
-    function toggleEditMode() {
-      editMode = !editMode;
-      alert(editMode ? 'Режим редактирования включён' : 'Режим редактирования выключен');
+    function enableAddCameraMode() {
+      if (!isLoggedIn) return;
+      addCameraMode = !addCameraMode;
+      alert(addCameraMode ? 'Режим добавления камеры включен. Кликните по карте.' : 'Режим добавления камеры отключен.');
     }
-
-    map.on('click', function(e) {
-      if (!isLoggedIn || !editMode) return;
-      selectedLatLng = e.latlng;
-      const form = document.getElementById('cameraForm');
-      form.style.display = 'flex';
-      form.style.top = `${e.originalEvent.clientY}px`;
-      form.style.left = `${e.originalEvent.clientX}px`;
-    });
   </script>
 </body>
 </html>
