@@ -80,36 +80,62 @@
 
     #controls button:hover { background-color: #f1f1f1; }
 
-    .camera-form {
-      position: absolute;
+    .camera-form, #logoutBtn {
       display: none;
-      flex-direction: column;
-      gap: 8px;
+    }
+
+    #loginBox {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       background: white;
-      padding: 10px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      z-index: 1500;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      z-index: 2000;
     }
 
-    .camera-form input {
-      padding: 6px;
-      font-size: 14px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+    #loginBox input {
+      display: block;
+      margin-bottom: 10px;
+      padding: 8px;
+      width: 200px;
     }
 
-    .camera-form button {
-      padding: 6px 10px;
-      background: #007bff;
+    #loginBox button {
+      padding: 8px 14px;
+      background: #28a745;
+      border: none;
       color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #logoutBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #dc3545;
+      color: white;
+      padding: 6px 12px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      z-index: 1100;
     }
   </style>
 </head>
 <body>
+  <div id="loginBox">
+    <h3>Login</h3>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+
+  <button id="logoutBtn" onclick="logout()">Logout</button>
+
   <div class="top-bar">
     <input type="text" id="searchBox" class="search-box" placeholder="Поиск камеры (например кафе)">
     <button class="filter-btn" data-type="food">🍔 Еда</button>
@@ -126,7 +152,6 @@
     <button id="zoom-out">−</button>
     <button id="locateBtn">📍</button>
   </div>
-
   <div class="camera-form" id="cameraForm">
     <input type="text" id="camTitle" placeholder="Camera Name">
     <input type="text" id="camStream" placeholder="RTMP or HLS URL">
@@ -136,6 +161,26 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
+    let isLoggedIn = false;
+
+    function login() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      if (user === 'admin' && pass === 'admin') {
+        isLoggedIn = true;
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('logoutBtn').style.display = 'block';
+      } else {
+        alert('Неверный логин или пароль');
+      }
+    }
+
+    function logout() {
+      isLoggedIn = false;
+      document.getElementById('logoutBtn').style.display = 'none';
+      document.getElementById('loginBox').style.display = 'block';
+    }
+
     const map = L.map('map', { zoomControl: false }).setView([34.1808, -118.3089], 13);
     const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -151,6 +196,7 @@
     let selectedLatLng = null;
 
     map.on('click', function(e) {
+      if (!isLoggedIn) return;
       selectedLatLng = e.latlng;
       const form = document.getElementById('cameraForm');
       form.style.display = 'flex';
