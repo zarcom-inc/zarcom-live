@@ -11,65 +11,35 @@
     video, iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
     .leaflet-popup-content-wrapper { max-width: 320px; }
     .top-bar {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1100;
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      background: white;
-      padding: 10px;
-      border-radius: 12px;
+      position: absolute; top: 10px; left: 10px; z-index: 1100;
+      display: flex; gap: 6px; flex-wrap: wrap;
+      background: white; padding: 10px; border-radius: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     .top-bar input.search-box {
-      padding: 8px 12px;
-      font-size: 14px;
-      border-radius: 20px;
-      border: 1px solid #ccc;
-      flex: 1;
+      padding: 8px 12px; font-size: 14px;
+      border-radius: 20px; border: 1px solid #ccc; flex: 1;
     }
     .top-bar .filter-btn {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 16px;
-      background: #eee;
-      cursor: pointer;
+      padding: 6px 12px; border: none;
+      border-radius: 16px; background: #eee; cursor: pointer;
       font-size: 14px;
     }
     #toggleMapBtn {
-      position: absolute;
-      top: 130px;
-      left: 10px;
-      z-index: 1000;
-      background: white;
-      padding: 6px 10px;
-      border-radius: 5px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      font-size: 14px;
-      cursor: pointer;
-      border: none;
+      position: absolute; top: 130px; left: 10px; z-index: 1000;
+      background: white; padding: 6px 10px; border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3); font-size: 14px;
+      cursor: pointer; border: none;
     }
     #controls {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      position: absolute; bottom: 20px; right: 20px; z-index: 1000;
+      display: flex; flex-direction: column; gap: 8px;
     }
     #controls button {
-      width: 40px;
-      height: 40px;
-      background-color: white;
-      border-radius: 50%;
-      border: 1px solid rgba(0,0,0,0.2);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      font-size: 20px;
-      cursor: pointer;
-      transition: background-color 0.3s;
+      width: 40px; height: 40px; background-color: white;
+      border-radius: 50%; border: 1px solid rgba(0,0,0,0.2);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 20px;
+      cursor: pointer; transition: background-color 0.3s;
     }
     #controls button:hover { background-color: #f1f1f1; }
   </style>
@@ -97,15 +67,12 @@
   <script>
     const map = L.map('map', { zoomControl: false }).setView([34.1808, -118.3089], 13);
     const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+      maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
     document.getElementById('zoom-in').onclick = () => map.zoomIn();
     document.getElementById('zoom-out').onclick = () => map.zoomOut();
-    document.getElementById('locateBtn').onclick = () => {
-      map.locate({ setView: true, maxZoom: 16 });
-    };
+    document.getElementById('locateBtn').onclick = () => map.locate({ setView: true, maxZoom: 16 });
 
     document.getElementById('toggleMapBtn').onclick = () => {
       if (map.hasLayer(tileLayer)) {
@@ -158,7 +125,11 @@
       { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8' },
       { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8' },
       { id: 'LALALAND', address: '1800 S Brand Blvd, Glendale, CA 91204', url: '/hls/cam4.m3u8' },
-      { id: "Trader Jo's", lat: 34.15995908795789, lng: -118.25430964670682, url: '/hls/cam5.m3u8' }
+      { id: "Trader Jo's", lat: 34.15995908795789, lng: -118.25430964670682, url: '/hls/cam5.m3u8' },
+      { id: 'Master BBQ', lat: 34.1466666667, lng: -118.2627777778, url: '/hls/cam6.m3u8' },
+      { id: 'Meat master', lat: 34.1942222222, lng: -118.3646666667, url: '/hls/cam7.m3u8' },
+      { id: 'Black Jack', lat: 34.20205288034795, lng: -118.40886141624648, url: '/hls/cam8.m3u8' },
+      { id: 'Home', lat: 34.207930027750535, lng: -118.36923043862326, url: '/hls/cam10.m3u8' }
     ];
 
     const markerRefs = [];
@@ -166,9 +137,8 @@
     (async () => {
       for (const cam of markers) {
         let lat, lng;
-        if (cam.lat && cam.lng) {
-          lat = cam.lat; lng = cam.lng;
-        } else {
+        if (cam.lat && cam.lng) { lat = cam.lat; lng = cam.lng; }
+        else {
           const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`);
           const data = await response.json();
           if (!data || data.length === 0) continue;
