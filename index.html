@@ -74,18 +74,21 @@
     <button id="zoom-in">+</button>
     <button id="zoom-out">−</button>
     <button id="locateBtn">📍</button>
+    <button id="toggleMapBtn">🗺️</button>
   </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const map = L.map('map', { zoomControl: false }).setView([34.1808, -118.3089], 13);
     const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
+      maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
     document.getElementById('zoom-in').onclick = () => map.zoomIn();
     document.getElementById('zoom-out').onclick = () => map.zoomOut();
-    document.getElementById('locateBtn').onclick = () => { map.locate({ setView: true, maxZoom: 16 }); };
+    document.getElementById('locateBtn').onclick = () => map.locate({ setView: true, maxZoom: 16 });
+    document.getElementById('toggleMapBtn').onclick = () => {
+      if (map.hasLayer(tileLayer)) { map.removeLayer(tileLayer); } else { tileLayer.addTo(map); }
+    };
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -94,17 +97,13 @@
     function createManagedPopup(streamUrl) {
       const container = document.createElement('div'); container.className = 'video-popup';
       const video = document.createElement('video'); video.controls = true; video.autoplay = false; video.muted = true; video.playsInline = true;
-      container.appendChild(video);
-      let hlsInstance = null;
+      container.appendChild(video); let hlsInstance;
       container.onPopupOpen = () => {
-        if (Hls.isSupported()) {
-          hlsInstance = new Hls(); hlsInstance.loadSource(streamUrl); hlsInstance.attachMedia(video);
+        if (Hls.isSupported()) { hlsInstance = new Hls(); hlsInstance.loadSource(streamUrl); hlsInstance.attachMedia(video);
           hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play());
         } else { video.src = streamUrl; video.onloadedmetadata = () => video.play(); }
       };
-      container.onPopupClose = () => {
-        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; } video.pause(); video.removeAttribute('src'); video.load();
-      };
+      container.onPopupClose = () => { if (hlsInstance) { hlsInstance.destroy(); } video.pause(); video.removeAttribute('src'); video.load(); };
       return container;
     }
     const initialCams = [
@@ -114,13 +113,15 @@
       { id: 'LALALAND', address: '1800 S Brand Blvd, Glendale, CA 91204', url: '/hls/cam4.m3u8' },
       { id: "Trader Jo's", lat: 34.15995908795789, lng: -118.25430964670682, url: '/hls/cam5.m3u8' },
       { id: 'Master BBQ', lat: 34.1466666667, lng: -118.2627777778, url: '/hls/cam6.m3u8' },
-      { id: 'Meat master', lat: 34.1942222222, lng: -118.3646666667, url: '/hls/cam7.m3u8' }
+      { id: 'Meat master', lat: 34.1942222222, lng: -118.3646666667, url: '/hls/cam7.m3u8' },
+      { id: 'Black Jack', lat: 34.20205288034795, lng: -118.40886141624648, url: '/hls/cam8.m3u8' },
+      { id: 'BBQ north', lat: 34.20192199766064, lng: -118.40862672295617, url: '/hls/cam9.m3u8' }
     ];
     const markerRefs = [];
     (async () => {
       for (const cam of initialCams) {
         let lat, lng;
-        if (cam.lat && cam.lng) { lat = cam.lat; lng = cam.lng; }
+        if (cam.lat !== undefined && cam.lng !== undefined) { lat = cam.lat; lng = cam.lng; }
         else {
           const data = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`).then(r => r.json());
           if (!data.length) continue; lat = +data[0].lat; lng = +data[0].lon;
