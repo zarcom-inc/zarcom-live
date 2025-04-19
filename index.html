@@ -96,31 +96,39 @@
       container.onPopupClose = () => { if (hlsInstance) { hlsInstance.destroy(); hlsInstance=null; } video.pause(); video.removeAttribute('src'); video.load(); };
       return container;
     }
+    // Now include all cameras
     const initialCams = [
       { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8' },
       { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8' },
       { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8' },
       { id: 'LALALAND', address: '1800 S Brand Blvd, Glendale, CA 91204', url: '/hls/cam4.m3u8' },
-      { id: "Trader Jo's", lat: 34.15995908795789, lng: -118.25430964670682, url: '/hls/cam5.m3u8' }
+      { id: "Trader Jo's", lat: 34.15995908795789, lng: -118.25430964670682, url: '/hls/cam5.m3u8' },
+      { id: 'Master BBQ', lat: 34.1466666667, lng: -118.2627777778, url: '/hls/cam6.m3u8' },
+      { id: 'Meat master', lat: 34.1942222222, lng: -118.3646666667, url: '/hls/cam7.m3u8' },
+      { id: 'Black Jack', lat: 34.20205288034795, lng: -118.40886141624648, url: '/hls/cam8.m3u8' },
+      { id: 'BBQ north', lat: 34.20192199766064, lng: -118.40862672295617, url: '/hls/cam9.m3u8' },
+      { id: 'Home', lat: 34.207930027750535, lng: -118.36923043862326, url: '/hls/cam10.m3u8' }
     ];
     const markerRefs = [];
     (async () => {
       for (const cam of initialCams) {
         let lat, lng;
-        if (cam.lat && cam.lng) { lat=cam.lat; lng=cam.lng; } else {
-          const data=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`).then(r=>r.json()); if(!data.length) continue; lat=+data[0].lat; lng=+data[0].lon;
+        if (cam.lat !== undefined && cam.lng !== undefined) { lat = cam.lat; lng = cam.lng; }
+        else {
+          const data = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`).then(r => r.json());
+          if (!data.length) continue; lat = +data[0].lat; lng = +data[0].lon;
         }
-        const marker=L.marker([lat,lng],{icon:redIcon}).addTo(map);
-        const popup=createManagedPopup(cam.url);
-        marker.bindPopup(popup).bindTooltip(cam.id,{permanent:true,direction:'right',offset:[10,0]});
-        marker.on('popupopen',()=>popup.onPopupOpen()); marker.on('popupclose',()=>popup.onPopupClose());
-        markerRefs.push({marker,id:cam.id});
+        const marker = L.marker([lat, lng], { icon: redIcon }).addTo(map);
+        const popup = createManagedPopup(cam.url);
+        marker.bindPopup(popup).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
+        marker.on('popupopen', () => popup.onPopupOpen()); marker.on('popupclose', () => popup.onPopupClose());
+        markerRefs.push({ marker, id: cam.id });
       }
     })();
-    let isLoggedIn=false;
-    function login(){const user=document.getElementById('username').value,pass=document.getElementById('password').value; if(user==='admin'&&pass==='admin'){isLoggedIn=true;document.getElementById('username').style.display='none';document.getElementById('password').style.display='none';document.querySelector('#admin-tools button:nth-child(3)').style.display='none';document.getElementById('addCameraBtn').style.display='inline-block';} else alert('Неверный логин или пароль');}
-    function enableAddCameraMode(){if(!isLoggedIn)return;alert('Кликните на карту для добавления камеры');map.once('click',e=>{const latlng=e.latlng;document.getElementById('add-camera-form').style.left=e.containerPoint.x+'px';document.getElementById('add-camera-form').style.top=e.containerPoint.y+'px';document.getElementById('add-camera-form').style.display='block';window.newCamLatLng=latlng;});}
-    function submitCameraForm(){const ip=document.getElementById('serverIp').value,port=document.getElementById('port').value,app=document.getElementById('appName').value,streamId=document.getElementById('streamId').value,latlng=window.newCamLatLng; if(latlng&&ip&&port&&app&&streamId){const cam={id:app+'/'+streamId,lat:latlng.lat,lng:latlng.lng,url:`http://${ip}:${port}/${app}/${streamId}.m3u8`}; fetch('http://5.78.131.127:3000/api/cameras',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cam)}).then(r=>r.json()).then(resp=>{if(resp.success){const marker=L.marker([cam.lat,cam.lng],{icon:redIcon}).addTo(map);const popup=createManagedPopup(cam.url);marker.bindPopup(popup).bindTooltip(cam.id,{permanent:true,direction:'right',offset:[10,0]});marker.on('popupopen',()=>popup.onPopupOpen());marker.on('popupclose',()=>popup.onPopupClose());}});document.getElementById('add-camera-form').style.display='none';}}   
+    let isLoggedIn = false;
+    function login() { const user = document.getElementById('username').value, pass = document.getElementById('password').value; if (user === 'admin' && pass === 'admin') { isLoggedIn = true; document.getElementById('username').style.display='none'; document.getElementById('password').style.display='none'; document.querySelector('#admin-tools button:nth-child(3)').style.display='none'; document.getElementById('addCameraBtn').style.display='inline-block'; } else alert('Неверный логин или пароль'); }
+    function enableAddCameraMode() { if (!isLoggedIn) return; alert('Кликните на карту для добавления камеры'); map.once('click', e => { const latlng = e.latlng; document.getElementById('add-camera-form').style.left = e.containerPoint.x + 'px'; document.getElementById('add-camera-form').style.top = e.containerPoint.y + 'px'; document.getElementById('add-camera-form').style.display = 'block'; window.newCamLatLng = latlng; }); }
+    function submitCameraForm() { const ip = document.getElementById('serverIp').value, port = document.getElementById('port').value, app = document.getElementById('appName').value, streamId = document.getElementById('streamId').value, latlng = window.newCamLatLng; if (latlng && ip && port && app && streamId) { const cam = { id: app+'/'+streamId, lat: latlng.lat, lng: latlng.lng, url: `http://${ip}:${port}/${app}/${streamId}.m3u8` }; fetch('http://5.78.131.127:3000/api/cameras',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cam)}).then(r=>r.json()).then(resp=>{ if (resp.success) { const marker = L.marker([cam.lat, cam.lng],{icon:redIcon}).addTo(map); const popup = createManagedPopup(cam.url); marker.bindPopup(popup).bindTooltip(cam.id,{permanent:true,direction:'right',offset:[10,0]}); marker.on('popupopen',()=>popup.onPopupOpen()); marker.on('popupclose',()=>popup.onPopupClose()); } }); document.getElementById('add-camera-form').style.display ='none'; } }
   </script>
 </body>
 </html>
