@@ -8,29 +8,22 @@
   <style>
     html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
     .video-popup { width: 300px; height: 170px; margin-bottom: 10px; }
-    video, iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
     .leaflet-popup-content-wrapper { max-width: 320px; }
 
-    .top-bar {
-      position: absolute;
-      top: 10px; left: 10px; z-index: 1100;
-      display: flex; gap: 6px;
-      background: white; padding: 10px; border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    .top-bar { position: absolute; top: 10px; left: 10px; z-index: 1100;
+      display: flex; gap: 6px; background: white; padding: 10px;
+      border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
-
-    .search-box {
-      padding: 8px 36px 8px 12px; font-size: 14px;
+    .search-box { padding: 8px 36px 8px 12px; font-size: 14px;
       border-radius: 20px; border: 1px solid #ccc;
       background: url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/search.svg') no-repeat right 10px center;
       background-size: 16px 16px; flex: 1;
     }
-
     .filter-btn { padding: 6px 12px; border: none; border-radius: 16px;
-      background: #eee; cursor: pointer; font-size: 14px; }
+      background: #eee; cursor: pointer; font-size: 14px;
+    }
 
-    #controls {
-      position: absolute; right: 20px; bottom: 20px; z-index: 1100;
+    #controls { position: absolute; right: 20px; bottom: 20px; z-index: 1100;
       display: flex; flex-direction: column; gap: 8px;
     }
     #controls button { width: 40px; height: 40px; border: none;
@@ -39,45 +32,34 @@
     }
     #locateBtn { font-size: 24px; color: red; }
 
-    #admin-tools {
-      position: absolute; top: 10px; right: 10px; z-index: 9999;
-      display: flex; align-items: center; gap: 6px;
-      background: white; padding: 6px 10px; border-radius: 10px;
-      box-shadow: 0 0 6px rgba(0,0,0,0.2);
+    #admin-tools { position: absolute; top: 10px; right: 10px; z-index: 9999;
+      display: flex; align-items: center; gap: 6px; background: white;
+      padding: 6px 10px; border-radius: 10px; box-shadow: 0 0 6px rgba(0,0,0,0.2);
     }
-    #add-camera-form {
-      position: absolute; display: none; background: white;
-      padding: 10px; border: 1px solid #ccc; border-radius: 10px;
-      z-index: 9999; box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    #add-camera-form { display: none; }
+
+    /* Modal styles */
+    #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center;
     }
-    #add-camera-form input { display: block; margin-bottom: 6px;
-      width: 200px; padding: 4px; }
+    #modal-content { background: white; width: 90%; height: 80%; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+    #modal-map { flex: 1; }
+    #modal-form { padding: 10px; display: flex; gap: 6px; }
+    #modal-form input { flex: 1; padding: 6px; font-size: 14px; }
+    #modal-form button { padding: 6px 12px; font-size: 14px; }
   </style>
 </head>
 <body>
   <div class="top-bar">
-    <input type="text" id="searchBox" class="search-box" placeholder="Поиск камеры (например кафе)">
-    <button class="filter-btn" data-type="food">🍔</button>
-    <button class="filter-btn" data-type="parking">🅿️</button>
-    <button class="filter-btn" data-type="gas">⛽</button>
-    <button class="filter-btn" data-type="laundry">🧺</button>
-    <button class="filter-btn" data-type="building">🏢</button>
-    <button class="filter-btn" data-type="ev">🔌</button>
+    <input type="text" id="searchBox" class="search-box" placeholder="Поиск камеры">
+    <button class="filter-btn">🍔</button>
+    <button class="filter-btn">🅿️</button>
   </div>
-
   <div id="admin-tools">
     <input type="text" id="username" placeholder="Login">
     <input type="password" id="password" placeholder="Password">
-    <button id="loginBtn" onclick="login()">Login</button>
-    <button id="addCameraBtn" onclick="enableAddCameraMode()" style="display:none;">➕</button>
-  </div>
-
-  <div id="add-camera-form">
-    <input type="text" id="serverIp" placeholder="Server IP">
-    <input type="text" id="port" placeholder="Port">
-    <input type="text" id="appName" placeholder="App Name">
-    <input type="text" id="streamId" placeholder="Stream ID">
-    <button onclick="submitCameraForm()">OK</button>
+    <button id="loginBtn">Login</button>
+    <button id="addBtn" style="display:none;">➕</button>
   </div>
 
   <div id="map"></div>
@@ -87,115 +69,63 @@
     <button id="locateBtn">🎯</button>
   </div>
 
+  <!-- Modal for adding camera -->
+  <div id="modal">
+    <div id="modal-content">
+      <div id="modal-map"></div>
+      <div id="modal-form">
+        <input type="text" id="m-serverIp" placeholder="Server IP">
+        <input type="text" id="m-port" placeholder="Port">
+        <input type="text" id="m-appName" placeholder="App Name">
+        <input type="text" id="m-streamId" placeholder="Stream ID">
+        <button id="m-submit">OK</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    const map = L.map('map', { zoomControl: false }).setView([34.1808, -118.3089], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+    const map = L.map('map',{ zoomControl: false }).setView([34.18,-118.3089],13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19 }).addTo(map);
+    document.getElementById('zoom-in').onclick=()=>map.zoomIn();
+    document.getElementById('zoom-out').onclick=()=>map.zoomOut();
+    document.getElementById('locateBtn').onclick=()=>navigator.geolocation?
+      navigator.geolocation.getCurrentPosition(p=>map.setView([p.coords.latitude,p.coords.longitude],16)):
+      alert('Геолокация не поддерживается');
 
-    document.getElementById('zoom-in').onclick = () => map.zoomIn();
-    document.getElementById('zoom-out').onclick = () => map.zoomOut();
-    document.getElementById('locateBtn').onclick = () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          L.marker([lat, lng]).addTo(map).bindTooltip("You are here", { permanent: false });
-          map.setView([lat, lng], 16);
-        }, () => alert('Не удалось получить местоположение'));
-      } else alert('Геолокация не поддерживается');
+    const redIcon=new L.Icon({ iconUrl:'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png', iconSize:[25,41], iconAnchor:[12,41]});
+    const initial=[{id:'OFFICE',lat:34.1811,lng:-118.3089,url:'/hls/cam1.m3u8'},{id:'BBQ',lat:34.1601849,lng:-118.2546612,url:'/hls/cam2.m3u8'},{id:'5STAR',lat:34.2193112,lng:-118.4513592,url:'/hls/cam3.m3u8'},{id:'LALALAND',lat:34.120899,lng:-118.267197,url:'/hls/cam4.m3u8'},{id:"Trader Jo's",lat:34.1599591,lng:-118.2543096,url:'/hls/cam5.m3u8'}];
+    const markerRefs=[];
+    initial.forEach(c=>{const m=L.marker([c.lat,c.lng],{icon:redIcon}).addTo(map);const p=makePopup(c.url);m.bindPopup(p).bindTooltip(c.id,{permanent:true});m.on('popupopen',()=>p.onPopupOpen());m.on('popupclose',()=>p.onPopupClose());markerRefs.push({marker:m,id:c.id});});
+
+    let isLogged=false;
+    document.getElementById('loginBtn').onclick=()=>{if(document.getElementById('username').value==='admin'&&document.getElementById('password').value==='admin'){isLogged=true;document.getElementById('username').style.display='none';document.getElementById('password').style.display='none';document.getElementById('loginBtn').style.display='none';document.getElementById('addBtn').style.display='inline-block';}};
+
+    // modal setup
+    const modal=document.getElementById('modal');
+    const modalMap=L.map('modal-map',{ zoomControl:false }).setView([34.18,-118.3089],13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(modalMap);
+    const dragIcon=new L.DivIcon({className:'',html:'<span style="font-size:32px;">➕</span>'});
+    let dragMarker=L.marker(map.getCenter(),{icon:dragIcon,draggable:true}).addTo(modalMap);
+    const openModal=()=>{modal.style.display='flex';dragMarker.setLatLng(modalMap.getCenter());modalMap.invalidateSize();};
+    document.getElementById('addBtn').onclick=()=>isLogged?openModal():null;
+    document.getElementById('m-submit').onclick=()=>{
+      const latlng=dragMarker.getLatLng();
+      const cam={id:document.getElementById('m-appName').value+'/'+document.getElementById('m-streamId').value,lat:latlng.lat,lng:latlng.lng,url:`http://${document.getElementById('m-serverIp').value}:${document.getElementById('m-port').value}/${document.getElementById('m-appName').value}/${document.getElementById('m-streamId').value}.m3u8`};
+      fetch('http://5.78.131.127:3000/api/cameras',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cam)})
+        .then(r=>r.json()).then(r=>{if(r.success){const mk=L.marker([cam.lat,cam.lng],{icon:redIcon}).addTo(map);const pp=makePopup(cam.url);mk.bindPopup(pp).bindTooltip(cam.id,{permanent:true});mk.on('popupopen',()=>pp.onPopupOpen());mk.on('popupclose',()=>pp.onPopupClose());markerRefs.push({marker:mk,id:cam.id});}});
+      modal.style.display='none';
     };
 
-    const redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-    });
+    // popup helper
+    function makePopup(url){const c=document.createElement('div');c.className='video-popup';const v=document.createElement('video');v.controls=v.playsInline=true;v.muted=true;c.appendChild(v);let hls; c.onPopupOpen=()=>{if(Hls.isSupported()){hls=new Hls();hls.loadSource(url);hls.attachMedia(v);hls.on(Hls.Events.MANIFEST_PARSED,()=>v.play());}else{v.src=url;v.onloadedmetadata=()=>v.play();}};c.onPopupClose=()=>{if(hls){hls.destroy();hls=null;}v.pause();v.removeAttribute('src');v.load();};return c;}
 
-    // Static existing cameras
-    const initialCams = [
-      { id: 'OFFICE', lat: 34.1811, lng: -118.3089, url: '/hls/cam1.m3u8' },
-      { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8' },
-      { id: '5STAR', lat: 34.2193112, lng: -118.4513592, url: '/hls/cam3.m3u8' },
-      { id: 'LALALAND', lat: 34.120899, lng: -118.267197, url: '/hls/cam4.m3u8' },
-      { id: "Trader Jo's", lat: 34.15995908795789, lng: -118.25430964670682, url: '/hls/cam5.m3u8' }
-    ];
+    // dynamic load
+    fetch('http://5.78.131.127:3000/api/cameras').then(r=>r.json()).then(d=>d.forEach(c=>{if(!initial.some(ic=>ic.id===c.id)){const m=L.marker([c.lat,c.lng],{icon:redIcon}).addTo(map);const p=makePopup(c.url);m.bindPopup(p).bindTooltip(c.id,{permanent:true});m.on('popupopen',()=>p.onPopupOpen());m.on('popupclose',()=>p.onPopupClose());markerRefs.push({marker:m,id:c.id});}}));
 
-    const markerRefs = [];
-    initialCams.forEach(cam => {
-      const marker = L.marker([cam.lat, cam.lng], { icon: redIcon }).addTo(map);
-      const popup = createManagedPopup(cam.url);
-      marker.bindPopup(popup).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
-      marker.on('popupopen', () => popup.onPopupOpen()); marker.on('popupclose', () => popup.onPopupClose());
-      markerRefs.push({ marker, id: cam.id });
-    });
-
-    let isLoggedIn = false, addCameraMode = false, lastClickedLatLng = null;
-
-    function login() {
-      const user = document.getElementById('username').value,
-            pass = document.getElementById('password').value;
-      if (user==='admin' && pass==='admin') {
-        isLoggedIn=true; document.getElementById('username').style.display='none';
-        document.getElementById('password').style.display='none';
-        document.getElementById('loginBtn').style.display='none';
-        document.getElementById('addCameraBtn').style.display='inline-block';
-      } else alert('Неверный логин или пароль');
-    }
-    function enableAddCameraMode() {
-      if (!isLoggedIn) return;
-      addCameraMode=true; alert('Нажмите на карту для добавления новой камеры');
-    }
-    function submitCameraForm() {
-      const ip=document.getElementById('serverIp').value,
-            port=document.getElementById('port').value,
-            app=document.getElementById('appName').value,
-            streamId=document.getElementById('streamId').value;
-      if (lastClickedLatLng && ip && port && app && streamId) {
-        const cam={id:app+'/'+streamId,lat:lastClickedLatLng.lat,lng:lastClickedLatLng.lng,url:`http://${ip}:${port}/${app}/${streamId}.m3u8`};
-        fetch('http://5.78.131.127:3000/api/cameras',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cam)})
-          .then(r=>r.json()).then(resp=>{if(resp.success){
-            const marker=L.marker([cam.lat,cam.lng],{icon:redIcon}).addTo(map);
-            const popup=createManagedPopup(cam.url);
-            marker.bindPopup(popup).bindTooltip(cam.id,{permanent:true,direction:'right',offset:[10,0]});
-            marker.on('popupopen',()=>popup.onPopupOpen());marker.on('popupclose',()=>popup.onPopupClose());
-            markerRefs.push({marker,id:cam.id});
-          }});
-        addCameraMode=false; document.getElementById('add-camera-form').style.display='none';
-      }
-    }
-    map.on('click',e=>{if(addCameraMode&&isLoggedIn){
-      lastClickedLatLng=e.latlng;
-      const form=document.getElementById('add-camera-form');
-      form.style.left=e.containerPoint.x+'px';form.style.top=e.containerPoint.y+'px';form.style.display='block';
-    }});
-
-    function createManagedPopup(url) {
-      const c=document.createElement('div');c.className='video-popup';
-      const v=document.createElement('video');v.controls=true;v.autoplay=false;v.muted=true;v.playsInline=true;
-      c.appendChild(v);
-      let hls;
-      c.onPopupOpen=()=>{if(Hls.isSupported()){hls=new Hls();hls.loadSource(url);hls.attachMedia(v);hls.on(Hls.Events.MANIFEST_PARSED,()=>v.play());}else{v.src=url;v.onloadedmetadata=()=>v.play();}};
-      c.onPopupClose=()=>{if(hls){hls.destroy();hls=null;}v.pause();v.removeAttribute('src');v.load();};
-      return c;
-    }
-
-    // Load dynamic cameras without skipping
-    fetch('http://5.78.131.127:3000/api/cameras')
-      .then(r=>r.json()).then(data=>{
-        data.forEach(cam=>{
-          const marker=L.marker([cam.lat,cam.lng],{icon:redIcon}).addTo(map);
-          const popup=createManagedPopup(cam.url);
-          marker.bindPopup(popup).bindTooltip(cam.id,{permanent:true,direction:'right',offset:[10,0]});
-          marker.on('popupopen',()=>popup.onPopupOpen());marker.on('popupclose',()=>popup.onPopupClose());
-          markerRefs.push({marker,id:cam.id});
-        });
-      });
-
-    document.getElementById('searchBox').addEventListener('input',function(){
-      const v=this.value.trim().toLowerCase();
-      markerRefs.forEach(({marker,id})=>{if(id.toLowerCase().includes(v)){marker.openPopup();map.setView(marker.getLatLng(),18);}});
-    });
+    // search
+    document.getElementById('searchBox').addEventListener('input',e=>{const v=e.target.value.trim().toLowerCase();markerRefs.forEach(({marker,id})=>{if(id.toLowerCase().includes(v)){marker.openPopup();map.setView(marker.getLatLng(),18);}});});
   </script>
 </body>
 </html>
