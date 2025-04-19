@@ -21,7 +21,10 @@
       padding: 8px 12px; font-size: 14px;
       border-radius: 20px; border: 1px solid #ccc;
       flex: 1;
+      background: url('data:image/svg+xml;utf8,<svg fill="%23999" height="16" viewBox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14z"/></svg>') no-repeat right 12px center;
+      background-size: 16px 16px;
     }
+    .top-bar input.search-box:focus { outline: none; }
     .top-bar .filter-btn,
     .top-bar .toggle-btn {
       padding: 6px 12px; border: none;
@@ -41,6 +44,15 @@
       transition: background-color 0.3s;
     }
     #controls button:hover { background: #f1f1f1; }
+
+    @media (max-width: 600px) {
+      /* Stack controls vertically on left side */
+      #controls {
+        left: 10px;
+        right: auto;
+        bottom: 20px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -52,7 +64,6 @@
     <button class="filter-btn" data-type="laundry">🧺</button>
     <button class="filter-btn" data-type="building">🏢</button>
     <button class="filter-btn" data-type="ev">🔌</button>
-    <!-- Toggle map visibility moved into top-bar -->
     <button id="toggleMapBtn" class="toggle-btn" title="Показать/скрыть карту">🗺️</button>
   </div>
   <div id="map"></div>
@@ -137,8 +148,7 @@
     (async () => {
       for (const cam of markers) {
         let lat, lng;
-        if (cam.lat !== undefined && cam.lng !== undefined) { lat = cam.lat; lng = cam.lng; }
-        else {
+        if (cam.lat !== undefined && cam.lng !== undefined) { lat = cam.lat; lng = cam.lng; } else {
           const data = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`).then(r => r.json());
           if (!data.length) continue;
           lat = +data[0].lat; lng = +data[0].lon;
@@ -155,10 +165,7 @@
     document.getElementById('searchBox').addEventListener('input', () => {
       const val = document.getElementById('searchBox').value.trim().toLowerCase();
       markerRefs.forEach(({ marker, id }) => {
-        if (id.toLowerCase().includes(val)) {
-          marker.openPopup();
-          map.setView(marker.getLatLng(), 18);
-        }
+        if (id.toLowerCase().includes(val)) { marker.openPopup(); map.setView(marker.getLatLng(), 18); }
       });
     });
   </script>
