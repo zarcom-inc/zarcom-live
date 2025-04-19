@@ -11,9 +11,9 @@
     video, iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
     .leaflet-popup-content-wrapper { max-width: 320px; }
     .top-bar {
-      position: absolute; top: 10px; left: 10px; z-index: 1100;
+      position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1100;
       display: flex; align-items: center; gap: 6px;
-      background: white; padding: 10px; border-radius: 12px;
+      background: white; padding: 8px; border-radius: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     .top-bar input.search-box {
@@ -22,9 +22,8 @@
       background: url('data:image/svg+xml;utf8,<svg fill="%23999" height="16" viewBox="0 0 24 24" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14z"/></svg>') no-repeat right 12px center;
       background-size: 16px 16px;
     }
-    .top-bar input.search-box:focus { outline: none; }
-    .top-bar .filter-btn {
-      padding: 6px 12px; border: none; border-radius: 16px;
+    .top-bar button.filter-btn {
+      padding: 6px 10px; border: none; border-radius: 16px;
       background: #eee; cursor: pointer; font-size: 14px;
     }
     #toggleMapBtn {
@@ -38,13 +37,36 @@
       display: flex; flex-direction: column; gap: 8px;
     }
     #controls button {
-      width: 40px; height: 40px; background-color: white;
+      width: 40px; height: 40px; background: white;
       border-radius: 50%; border: 1px solid rgba(0,0,0,0.2);
       box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 20px;
-      cursor: pointer; transition: background-color 0.3s;
-      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background-color 0.3s;
     }
-    #controls button:hover { background-color: #f1f1f1; }
+    #controls button:hover { background: #f1f1f1; }
+
+    /* Mobile adjustments */
+    @media (max-width: 600px) {
+      .top-bar {
+        flex-direction: column; top: 5px; left: 5px; right: 5px;
+        padding: 6px;
+      }
+      .top-bar input.search-box {
+        font-size: 12px; padding: 6px 10px;
+      }
+      .top-bar button.filter-btn {
+        padding: 4px 8px; font-size: 12px;
+      }
+      #toggleMapBtn {
+        top: 100px; left: 5px; padding: 4px 8px; font-size: 12px;
+      }
+      #controls {
+        right: 10px; bottom: 10px;
+      }
+      #controls button {
+        width: 50px; height: 50px; font-size: 24px;
+      }
+    }
   </style>
 </head>
 <body>
