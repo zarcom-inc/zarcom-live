@@ -53,11 +53,34 @@
     /* Mobile adjustments */
     @media (max-width: 600px) {
       .top-bar {
-        padding: 6px; gap: 4px;
-        /* Keep row layout, allow horizontal scroll */
-        flex-wrap: nowrap;
-        overflow-x: auto;
+        flex-wrap: wrap;
       }
+      .top-bar input.search-box {
+        font-size: 12px;
+        padding: 6px 10px;
+        flex: 1 1 100%;
+      }
+      .top-bar button.filter-btn {
+        flex: 0 0 auto;
+        margin: 2px;
+        font-size: 14px;
+      }
+      #toggleMapBtn {
+        top: 100px;
+        left: 5px;
+        padding: 4px 8px;
+        font-size: 12px;
+      }
+      #controls {
+        right: 10px;
+        bottom: 10px;
+      }
+      #controls button {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+      }
+    }
       .top-bar input.search-box {
         font-size: 12px; padding: 6px 10px;
       }
