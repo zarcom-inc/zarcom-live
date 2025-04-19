@@ -16,7 +16,6 @@
       display: flex; align-items: center; gap: 6px;
       background: white; padding: 8px; border-radius: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      overflow: hidden;
     }
     .top-bar input.search-box {
       padding: 8px 12px; font-size: 14px; border-radius: 20px;
@@ -25,9 +24,8 @@
       background-size: 16px 16px;
     }
     .top-bar input.search-box:focus { outline: none; }
-    .top-bar button.filter-btn {
-      flex: 0 0 auto;
-      padding: 6px 10px; border: none; border-radius: 16px;
+    .top-bar .filter-btn {
+      padding: 6px 12px; border: none; border-radius: 16px;
       background: #eee; cursor: pointer; font-size: 14px;
     }
 
@@ -49,54 +47,6 @@
       transition: background-color 0.3s;
     }
     #controls button:hover { background: #f1f1f1; }
-
-    /* Mobile adjustments */
-    @media (max-width: 600px) {
-      .top-bar {
-        flex-wrap: wrap;
-      }
-      .top-bar input.search-box {
-        font-size: 12px;
-        padding: 6px 10px;
-        flex: 1 1 100%;
-      }
-      .top-bar button.filter-btn {
-        flex: 0 0 auto;
-        margin: 2px;
-        font-size: 14px;
-      }
-      #toggleMapBtn {
-        top: 100px;
-        left: 5px;
-        padding: 4px 8px;
-        font-size: 12px;
-      }
-      #controls {
-        right: 10px;
-        bottom: 10px;
-      }
-      #controls button {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-      }
-    }
-      .top-bar input.search-box {
-        font-size: 12px; padding: 6px 10px;
-      }
-      .top-bar button.filter-btn {
-        padding: 6px; font-size: 14px;
-      }
-      #toggleMapBtn {
-        top: 100px; left: 5px; padding: 4px 8px; font-size: 12px;
-      }
-      #controls {
-        right: 10px; bottom: 10px;
-      }
-      #controls button {
-        width: 50px; height: 50px; font-size: 24px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -141,4 +91,30 @@
       const container=document.createElement('div');container.className='video-popup';
       const video=document.createElement('video');video.controls=true;video.autoplay=false;video.muted=true;video.playsInline=true;container.appendChild(video);
       let hlsInstance;
-      container.onPopupOpen=()=>{
+      container.onPopupOpen=()=>{if(Hls.isSupported()){hlsInstance=new Hls();hlsInstance.loadSource(streamUrl);hlsInstance.attachMedia(video);hlsInstance.on(Hls.Events.MANIFEST_PARSED,()=>video.play());}else{video.src=streamUrl;video.onloadedmetadata=()=>video.play();}};
+      container.onPopupClose=()=>{if(hlsInstance){hlsInstance.destroy();hlsInstance=null;}video.pause();video.removeAttribute('src');video.load();};
+      return container;
+    }
+
+    const markers=[
+      {id:'OFFICE',address:'300 North 3rd Street, Burbank, CA',url:'/hls/cam1.m3u8'},
+      {id:'BBQ',lat:34.1601849437365,lng:-118.25466125331505,url:'/hls/cam2.m3u8'},
+      {id:'5STAR',address:'8230 Allott Ave, Panorama City, CA 91402',url:'/hls/cam3.m3u8'},
+      {id:'LALALAND',address:'1800 S Brand Blvd, Glendale, CA 91204',url:'/hls/cam4.m3u8'},
+      {id:"Trader Jo's",lat:34.15995908795789,lng:-118.25430964670682,url:'/hls/cam5.m3u8'},
+      {id:'Master BBQ',lat:34.1466666667,lng:-118.2627777778,url:'/hls/cam6.m3u8'},
+      {id:'Meat master',lat:34.1942222222,lng:-118.3646666667,url:'/hls/cam7.m3u8'},
+      {id:'Black Jack',lat:34.20205288034795,lng:-118.40886141624648,url:'/hls/cam8.m3u8'},
+      {id:'Home',lat:34.207930027750535,lng:-118.36923043862326,url:'/hls/cam10.m3u8'}
+    ];
+
+    const markerRefs=[];
+    (async(()=>{for(const cam of markers){let lat,lng;if(cam.lat&&cam.lng){lat=cam.lat;lng=cam.lng;}else{const data=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`).then(r=>r.json());if(!data.length)continue;lat=+data[0].lat;lng=+data[0].lon;}const marker=L.marker([lat,lng],{icon:redIcon}).addTo(map);const popup=createManagedPopup(cam.url);marker.bindPopup(popup).bindTooltip(cam.id,{permanent:true,direction:'right',offset:[10,0]});marker.on('popupopen',()=>popup.onPopupOpen());marker.on('popupclose',()=>popup.onPopupClose());markerRefs.push({marker,id:cam.id});}}))();
+
+    document.getElementById('searchBox').addEventListener('input',()=>{
+      const val=document.getElementById('searchBox').value.trim().toLowerCase();
+      markerRefs.forEach(({marker,id})=>{if(id.toLowerCase().includes(val)){marker.openPopup();map.setView(marker.getLatLng(),18);} });
+    });
+  </script>
+</body>
+</html>
