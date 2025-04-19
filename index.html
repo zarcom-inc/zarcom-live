@@ -12,8 +12,8 @@
     .leaflet-popup-content-wrapper { max-width: 320px; }
 
     .top-bar {
-      position: absolute; top: 10px; left: 10px; z-index: 1100;
-      display: flex; gap: 6px;
+      position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1100;
+      display: flex; align-items: center; gap: 6px;
       background: white; padding: 10px; border-radius: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
@@ -22,18 +22,13 @@
       border-radius: 20px; border: 1px solid #ccc;
       flex: 1;
     }
-    .top-bar .filter-btn {
+    .top-bar .filter-btn,
+    .top-bar .toggle-btn {
       padding: 6px 12px; border: none;
       border-radius: 16px; background: #eee;
       cursor: pointer; font-size: 14px;
     }
 
-    #toggleMapBtn {
-      position: absolute; top: 130px; left: 10px; z-index: 1000;
-      background: white; padding: 6px 10px; border-radius: 5px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      font-size: 14px; cursor: pointer; border: none;
-    }
     #controls {
       position: absolute; bottom: 20px; right: 20px; z-index: 1000;
       display: flex; flex-direction: column; gap: 8px;
@@ -41,9 +36,8 @@
     #controls button {
       width: 40px; height: 40px; background: white;
       border-radius: 50%; border: 1px solid rgba(0,0,0,0.2);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      font-size: 20px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 20px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: background-color 0.3s;
     }
     #controls button:hover { background: #f1f1f1; }
@@ -58,8 +52,9 @@
     <button class="filter-btn" data-type="laundry">🧺</button>
     <button class="filter-btn" data-type="building">🏢</button>
     <button class="filter-btn" data-type="ev">🔌</button>
+    <!-- Toggle map visibility moved into top-bar -->
+    <button id="toggleMapBtn" class="toggle-btn" title="Показать/скрыть карту">🗺️</button>
   </div>
-  <button id="toggleMapBtn">Скрыть карту</button>
   <div id="map"></div>
   <div id="controls">
     <button id="zoom-in">+</button>
@@ -88,10 +83,8 @@
     document.getElementById('toggleMapBtn').onclick = () => {
       if (map.hasLayer(tileLayer)) {
         map.removeLayer(tileLayer);
-        document.getElementById('toggleMapBtn').textContent = 'Показать карту';
       } else {
         tileLayer.addTo(map);
-        document.getElementById('toggleMapBtn').textContent = 'Скрыть карту';
       }
     };
 
