@@ -1,160 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zarcom Cameras Map</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
-    .video-popup { width: 300px; height: 170px; margin-bottom: 10px; }
-    video, iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
-    .leaflet-popup-content-wrapper { max-width: 320px; }
+// Главный конфиг камеры проекта Zarcom
 
-    .top-bar {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1100;
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      background: white;
-      padding: 10px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    }
-    .top-bar input.search-box {
-      padding: 8px 12px;
-      font-size: 14px;
-      border-radius: 20px;
-      border: 1px solid #ccc;
-      flex: 1;
-    }
-    .top-bar .filter-btn {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 16px;
-      background: #eee;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    #toggleMapBtn {
-      position: absolute;
-      top: 130px;
-      left: 10px;
-      z-index: 1000;
-      background: white;
-      padding: 6px 10px;
-      border-radius: 5px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      font-size: 14px;
-      cursor: pointer;
-      border: none;
-    }
-    #controls {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    #controls button {
-      width: 40px;
-      height: 40px;
-      background-color: white;
-      border-radius: 50%;
-      border: 1px solid rgba(0,0,0,0.2);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      font-size: 20px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    #controls button:hover { background-color: #f1f1f1; }
-  </style>
-</head>
-<body>
-  <div class="top-bar">
-    <input type="text" id="searchBox" class="search-box" placeholder="Поиск камеры (например кафе)">
-    <button class="filter-btn" data-type="food">🍔 Еда</button>
-    <button class="filter-btn" data-type="parking">🅿️ Паркинги</button>
-    <button class="filter-btn" data-type="gas">⛽ Заправки</button>
-    <button class="filter-btn" data-type="laundry">🧺 Прачечные</button>
-    <button class="filter-btn" data-type="building">🏢 Билдинги</button>
-    <button class="filter-btn" data-type="ev">🔌 Зарядки</button>
-  </div>
-  <button id="toggleMapBtn">Скрыть карту</button>
-  <div id="map"></div>
-  <div id="controls">
-    <button id="zoom-in">+</button>
-    <button id="zoom-out">−</button>
-    <button id="locateBtn">📍</button>
-  </div>
+export const cameraTypes = [
+  { label: "Все", value: "all" },
+  { label: "Парковка 🚗", value: "parking" },
+  { label: "Автомойка 🚿", value: "carwash" },
+  { label: "Фастфуд 🍔", value: "fastfood" },
+  { label: "Прачечная 🧺", value: "laundry" },
+  { label: "Зарядка EV ⚡", value: "ev" },
+];
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script>
-    const map = L.map('map', { zoomControl: false }).setView([34.1808, -118.3089], 13);
-    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+export const filters = [
+  { label: "Все камеры", value: "all" },
+  { label: "Только в эфире", value: "live" },
+  { label: "С записями", value: "recorded" },
+  { label: "Популярные", value: "popular" },
+];
 
-    document.getElementById('zoom-in').onclick = () => map.zoomIn();
-    document.getElementById('zoom-out').onclick = () => map.zoomOut();
-    document.getElementById('locateBtn').onclick = () => map.locate({ setView: true, maxZoom: 16 });
-
-    document.getElementById('toggleMapBtn').onclick = () => {
-      if (map.hasLayer(tileLayer)) {
-        map.removeLayer(tileLayer);
-        document.getElementById('toggleMapBtn').textContent = 'Показать карту';
-      } else {
-        tileLayer.addTo(map);
-        document.getElementById('toggleMapBtn').textContent = 'Скрыть карту';
-      }
-    };
-
-    const redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-    });
-
-    function createManagedPopup(streamUrl) {
-      const container = document.createElement('div');
-      container.className = 'video-popup';
-      const video = document.createElement('video');
-      video.controls = true; video.autoplay = false; video.muted = true; video.playsInline = true;
-      container.appendChild(video);
-      let hlsInstance = null;
-
-      container.onPopupOpen = () => {
-        if (Hls.isSupported()) {
-          hlsInstance = new Hls();
-          hlsInstance.loadSource(streamUrl);
-          hlsInstance.attachMedia(video);
-          hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        } else {
-          video.src = streamUrl;
-          video.onloadedmetadata = () => video.play();
-        }
-      };
-
-      container.onPopupClose = () => {
-        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
-      };
-
-      return container;
-    }
-
-    const markers = [
-      { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8' },
-      { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8' },
-      { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8' },
-      { id: 'LALALAND', address: '1800 S Brand Blvd, Glendale, CA 91204', url: '/hls/cam4.m3u8' },
-      { id: "Trader Jo's", lat: 34.159959087umerator
+export const cameras = [
+  { id: 1, name: "5STAR", type: "fastfood", status: "live", lat: 34.22, lng: -118.45 },
+  { id: 2, name: "Black Jack", type: "parking", status: "recorded", lat: 34.23, lng: -118.40 },
+  { id: 3, name: "Home", type: "ev", status: "live", lat: 34.24, lng: -118.38 },
+  { id: 4, name: "Meat master", type: "carwash", status: "popular", lat: 34.25, lng: -118.37 },
+  { id: 5, name: "OFFICE", type: "laundry", status: "recorded", lat: 34.26, lng: -118.36 },
+];
