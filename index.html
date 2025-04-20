@@ -1,25 +1,172 @@
-// Главный конфиг камеры проекта Zarcom
+# Резервная копия всех настроек и команд
 
-export const cameraTypes = [
-  { label: "Все", value: "all" },
-  { label: "Парковка 🚗", value: "parking" },
-  { label: "Автомойка 🚿", value: "carwash" },
-  { label: "Фастфуд 🍔", value: "fastfood" },
-  { label: "Прачечная 🧺", value: "laundry" },
-  { label: "Зарядка EV ⚡", value: "ev" },
-];
+Ниже собраны все ключевые конфигурации, команды и настройки камеры, которые мы делали. Сохраните этот текст в своём блокноте для быстрого восстановления.
 
-export const filters = [
-  { label: "Все камеры", value: "all" },
-  { label: "Только в эфире", value: "live" },
-  { label: "С записями", value: "recorded" },
-  { label: "Популярные", value: "popular" },
-];
+---
 
-export const cameras = [
-  { id: 1, name: "5STAR", type: "fastfood", status: "live", lat: 34.22, lng: -118.45 },
-  { id: 2, name: "Black Jack", type: "parking", status: "recorded", lat: 34.23, lng: -118.40 },
-  { id: 3, name: "Home", type: "ev", status: "live", lat: 34.24, lng: -118.38 },
-  { id: 4, name: "Meat master", type: "carwash", status: "popular", lat: 34.25, lng: -118.37 },
-  { id: 5, name: "OFFICE", type: "laundry", status: "recorded", lat: 34.26, lng: -118.36 },
-];
+## 1. Конфиг Nginx с RTMP → HLS
+
+Файл: `/etc/nginx/nginx.conf`
+
+```nginx
+load_module /usr/lib/nginx/modules/ngx_rtmp_module.so;
+
+user www-data;
+worker_processes auto;
+error_log /var/log/nginx/error.log warn;
+pid /run/nginx.pid;
+
+events {
+    worker_connections 1024;
+}
+
+rtmp {
+    server {
+        listen 1935;
+        chunk_size 4096;
+
+        application live {
+            live on;
+            record off;
+            hls on;
+            hls_path /var/www/html/hls;
+            hls_fragment 3;
+        }
+    }
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    sendfile        on;
+    keepalive_timeout  65;
+
+    server {
+        listen       8080 default_server;
+        server_name  _;
+
+        location / {
+            root   /var/www/html;
+            index  index.html;
+        }
+
+        location /hls {
+            types {
+                application/vnd.apple.mpegurl m3u8;
+                video/mp2t ts;
+            }
+            alias /var/www/html/hls;
+            add_header Cache-Control no-cache;
+            add_header Access-Control-Allow-Origin *;
+        }
+    }
+}
+```
+
+---
+
+## 2. Страница с картой и плеером (финальный `index.html`)
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zarcom Camera Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
+    .video-popup { width: 320px; height: 180px; }
+    .leaflet-popup-content-wrapper { max-width: 340px; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    const map = L.map('map').setView([34.1808, -118.3089], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+
+    const icon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
+
+    function createVideoPopup(url) {
+      const c = document.createElement('div'); c.className = 'video-popup';
+      const v = document.createElement('video');
+      v.controls = true; v.autoplay = true; v.muted = true; v.playsInline = true; v.crossOrigin = 'anonymous';
+      c.appendChild(v);
+      if (Hls.isSupported()) {
+        const h = new Hls(); h.loadSource(url); h.attachMedia(v);
+      } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
+        v.src = url;
+      }
+      return c;
+    }
+
+    const marker = L.marker([34.1808, -118.3089], { icon }).addTo(map);
+    marker.bindPopup(() => createVideoPopup('/hls/cam1.m3u8'), { maxWidth: 340 });
+  </script>
+</body>
+</html>
+```
+
+---
+
+## 3. FFmpeg команды
+
+- **Тестовый поток (30 сек):**
+  ```bash
+  ffmpeg -re -f lavfi -i testsrc=size=640x360:rate=30 -t 30 \
+    -c:v libx264 -preset veryfast -tune zerolatency \
+    -f flv rtmp://localhost/live/cam1
+  ```
+
+- **RTSP → RTMP (pull→push):**
+  ```bash
+  ffmpeg -re -i rtsp://CAMERA_IP/stream \
+    -c copy -f flv rtmp://localhost/live/cam1
+  ```
+
+---
+
+## 4. Порты и фаерволл
+
+```bash
+ufw allow 1935/tcp
+ufw allow 8080/tcp
+ufw reload
+```
+
+---
+
+## 5. Бэкап старых файлов
+
+```bash
+mkdir -p ~/nginx_backup
+mv /etc/nginx/nginx.conf /etc/nginx/conf.d ~/nginx_backup/
+```
+
+---
+
+## 6. Vercel `vercel.json` для rewrite
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/hls/:path*",
+      "destination": "http://5.78.131.127:8080/hls/:path*"
+    }
+  ]
+}
+```
+
+---
+
+Сохраните этот файл целиком — это позволит вам быстро восстановить все настройки при необходимости.
+
