@@ -52,7 +52,6 @@
     <button class="filter-btn" data-type="laundry">🧺</button>
     <button class="filter-btn" data-type="building">🏢</button>
     <button class="filter-btn" data-type="ev">🔌</button>
-    <!-- Toggle map visibility moved into top-bar -->
     <button id="toggleMapBtn" class="toggle-btn" title="Показать/скрыть карту">🗺️</button>
   </div>
   <div id="map"></div>
@@ -122,15 +121,16 @@
     }
 
     const markers = [
-      { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8' },
-      { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8' },
-      { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8' },
-      { id: 'LALALAND', address: '1800 S Brand Blvd, Glendale, CA 91204', url: '/hls/cam4.m3u8' },
-      { id: "Trader Jo's", lat: 34.15995908795789, lng: -118.25430964670682, url: '/hls/cam5.m3u8' },
-      { id: 'Master BBQ', lat: 34.1466666667, lng: -118.2627777778, url: '/hls/cam6.m3u8' },
-      { id: 'Meat master', lat: 34.1942222222, lng: -118.3646666667, url: '/hls/cam7.m3u8' },
-      { id: 'Black Jack', lat: 34.20205288034795, lng: -118.40886141624648, url: '/hls/cam8.m3u8' },
-      { id: 'Home', lat: 34.207930027750535, lng: -118.36923043862326, url: '/hls/cam10.m3u8' }
+      { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8', type: 'building' },
+      { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8', type: 'food' },
+      { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8', type: 'laundry' },
+      { id: 'LALALAND', address: '1800 S Brand Blvd, Glendale, CA 91204', url: '/hls/cam4.m3u8', type: 'ev' },
+      { id: "Trader Jo's", lat: 34.15995908795789, lng: -118.25430964670682, url: '/hls/cam5.m3u8', type: 'food' },
+      { id: 'Master BBQ', lat: 34.1466666667, lng: -118.2627777778, url: '/hls/cam6.m3u8', type: 'food' },
+      { id: 'Meat master', lat: 34.1942222222, lng: -118.3646666667, url: '/hls/cam7.m3u8', type: 'food' },
+      { id: 'Black Jack', lat: 34.20205288034795, lng: -118.40886141624648, url: '/hls/cam8.m3u8', type: 'parking' },
+      { id: 'Home', lat: 34.207930027750535, lng: -118.36923043862326, url: '/hls/cam10.m3u8', type: 'building' },
+      { id: 'Meat master', lat: 34.19412745338414, lng: -118.36468680858975, url: '/hls/cam11.m3u8', type: 'food' }
     ];
 
     const markerRefs = [];
