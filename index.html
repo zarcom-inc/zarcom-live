@@ -125,7 +125,7 @@
     function createMultiPopup(streamUrls) {
       const container = document.createElement('div');
       container.style.display = 'flex';
-      container.style.flexDirection = 'row';
+      container.style.flexDirection = 'column';
       container.style.gap = '8px';
       container.onPopupOpen = () => container.childNodes.forEach(child => child.onPopupOpen?.());
       container.onPopupClose = () => container.childNodes.forEach(child => child.onPopupClose?.());
