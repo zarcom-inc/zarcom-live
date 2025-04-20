@@ -48,19 +48,35 @@
 
     /* Mobile layout */
     @media (max-width: 600px) {
-      /* Restore white background so map remains visible */
+      /* Horizontal filter icons with scroll */
       .top-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        top: 5px;
-        left: 5px;
-        right: 5px;
-        background: white;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        flex-wrap: nowrap;
+        overflow-x: auto;
         padding: 8px;
-        border-radius: 12px;
-        gap: 6px;
       }
+      .top-bar input.search-box {
+        flex: 0 0 auto;
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+      .top-bar .filter-btn,
+      .top-bar .toggle-btn {
+        flex: 0 0 auto;
+        padding: 4px 8px;
+        font-size: 12px;
+        margin-right: 4px;
+      }
+      /* Map toggle stays in row */
+      #controls {
+        right: 10px;
+        bottom: 10px;
+      }
+      #controls button {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+      }
+    }
       .top-bar input.search-box {
         width: 100%;
         margin-bottom: 8px;
