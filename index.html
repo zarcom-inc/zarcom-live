@@ -162,9 +162,20 @@
         const popup = cam.group ? createMultiPopup(cam.group) : createManagedPopup(cam.url);
         marker.bindPopup(popup, { maxWidth: 650 }).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
         marker.on('popupopen', () => {
-          popup.onPopupOpen();
-          map.setView(marker.getLatLng(), map.getZoom(), { animate: true });
-        });
+  popup.onPopupOpen();
+  setTimeout(() => {
+    const popupElement = document.querySelector('.leaflet-popup');
+    if (popupElement) {
+      const popupRect = popupElement.getBoundingClientRect();
+      const mapRect = map.getContainer().getBoundingClientRect();
+      const dx = popupRect.left + popupRect.width / 2 - (mapRect.left + mapRect.width / 2);
+      const dy = popupRect.top + popupRect.height / 2 - (mapRect.top + mapRect.height / 2);
+      const targetPoint = map.latLngToContainerPoint(marker.getLatLng()).subtract([dx, dy]);
+      const targetLatLng = map.containerPointToLatLng(targetPoint);
+      map.panTo(targetLatLng, { animate: true });
+    }
+  }, 50);
+});
         marker.on('popupclose', () => popup.onPopupClose());
         markerRefs.push({ marker, id: cam.id });
       }
