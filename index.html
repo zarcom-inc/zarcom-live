@@ -52,7 +52,6 @@
     <button class="filter-btn" data-type="laundry">🧺</button>
     <button class="filter-btn" data-type="building">🏢</button>
     <button class="filter-btn" data-type="ev">🔌</button>
-    <!-- Toggle map visibility moved into top-bar -->
     <button id="toggleMapBtn" class="toggle-btn" title="Показать/скрыть карту">🗺️</button>
   </div>
   <div id="map"></div>
@@ -62,9 +61,39 @@
     <button id="locateBtn" title="Моя локация">🎯</button>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script>
+  <script type="module">
+    // Configuration constants
+    export const cameraTypes = [
+      { label: "Все", value: "all" },
+      { label: "Парковка 🚗", value: "parking" },
+      { label: "Автомойка 🚿", value: "carwash" },
+      { label: "Фастфуд 🍔", value: "fastfood" },
+      { label: "Прачечная 🧺", value: "laundry" },
+      { label: "Зарядка EV ⚡", value: "ev" },
+    ];
+
+    export const filters = [
+      { label: "Все камеры", value: "all" },
+      { label: "Только в эфире", value: "live" },
+      { label: "С записями", value: "recorded" },
+      { label: "Популярные", value: "popular" },
+    ];
+
+    export const cameras = [
+      { id: "OFFICE", name: "OFFICE", type: "laundry", status: "recorded", lat: 34.1808, lng: -118.3089, url: "/hls/cam1.m3u8" },
+      { id: "BBQ", name: "Master BBQ", type: "fastfood", status: "live", lat: 34.16018, lng: -118.25466, url: "/hls/cam2.m3u8" },
+      { id: "5STAR", name: "5STAR", type: "fastfood", status: "live", lat: 34.227, lng: -118.45, url: "/hls/cam3.m3u8" },
+      { id: "LALALAND", name: "LALALAND", type: "ev", status: "recorded", lat: 34.13, lng: -118.26, url: "/hls/cam4.m3u8" },
+      { id: "Trader Jo's", name: "Trader Jo's", type: "fastfood", status: "popular", lat: 34.15996, lng: -118.25431, url: "/hls/cam5.m3u8" },
+      { id: "Master BBQ2", name: "Master BBQ", type: "carwash", status: "recorded", lat: 34.14666, lng: -118.26277, url: "/hls/cam6.m3u8" },
+      { id: "Meat master", name: "Meat master", type: "carwash", status: "popular", lat: 34.19422, lng: -118.36466, url: "/hls/cam7.m3u8" },
+      { id: "Black Jack", name: "Black Jack", type: "parking", status: "recorded", lat: 34.20205, lng: -118.40886, url: "/hls/cam8.m3u8" },
+      { id: "Home", name: "Home", type: "ev", status: "live", lat: 34.20793, lng: -118.36923, url: "/hls/cam10.m3u8" }
+    ];
+
+    import L from 'https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js';
+    import Hls from 'https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js';
+
     const map = L.map('map', { zoomControl: false }).setView([34.1808, -118.3089], 13);
     const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
@@ -72,8 +101,8 @@
 
     document.getElementById('zoom-in').onclick = () => map.zoomIn();
     document.getElementById('zoom-out').onclick = () => map.zoomOut();
-
     document.getElementById('locateBtn').onclick = () => map.locate({ setView: true, maxZoom: 16 });
+
     map.on('locationfound', e => {
       L.marker(e.latlng, { icon: redIcon }).addTo(map).bindTooltip('Вы здесь').openTooltip();
       map.setView(e.latlng, 16);
@@ -95,69 +124,41 @@
     });
 
     function createManagedPopup(streamUrl) {
-      const container = document.createElement('div');
-      container.className = 'video-popup';
-      const video = document.createElement('video');
-      video.controls = true; video.autoplay = false; video.muted = true; video.playsInline = true;
-      container.appendChild(video);
+      const container = document.createElement('div'); container.className = 'video-popup';
+      const video = document.createElement('video'); video.controls = true; video.autoplay = false; video.muted = true; video.playsInline = true; container.appendChild(video);
       let hlsInstance;
       container.onPopupOpen = () => {
         if (Hls.isSupported()) {
-          hlsInstance = new Hls();
-          hlsInstance.loadSource(streamUrl);
-          hlsInstance.attachMedia(video);
-          hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+          hlsInstance = new Hls(); hlsInstance.loadSource(streamUrl); hlsInstance.attachMedia(video); hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play());
         } else {
-          video.src = streamUrl;
-          video.onloadedmetadata = () => video.play();
+          video.src = streamUrl; video.onloadedmetadata = () => video.play();
         }
       };
       container.onPopupClose = () => {
-        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
+        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; } video.pause(); video.removeAttribute('src'); video.load();
       };
       return container;
     }
 
-    const markers = [
-      { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8' },
-      { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8' },
-      { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8' },
-      { id: 'LALALAND', address: '1800 S Brand Blvd, Glendale, CA 91204', url: '/hls/cam4.m3u8' },
-      { id: "Trader Jo's", lat: 34.15995908795789, lng: -118.25430964670682, url: '/hls/cam5.m3u8' },
-      { id: 'Master BBQ', lat: 34.1466666667, lng: -118.2627777778, url: '/hls/cam6.m3u8' },
-      { id: 'Meat master', lat: 34.1942222222, lng: -118.3646666667, url: '/hls/cam7.m3u8' },
-      { id: 'Black Jack', lat: 34.20205288034795, lng: -118.40886141624648, url: '/hls/cam8.m3u8' },
-      { id: 'Home', lat: 34.207930027750535, lng: -118.36923043862326, url: '/hls/cam10.m3u8' }
-    ];
-
-    const markerRefs = [];
-    (async () => {
-      for (const cam of markers) {
-        let lat, lng;
-        if (cam.lat !== undefined && cam.lng !== undefined) { lat = cam.lat; lng = cam.lng; }
-        else {
-          const data = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`).then(r => r.json());
-          if (!data.length) continue;
-          lat = +data[0].lat; lng = +data[0].lon;
-        }
-        const marker = L.marker([lat, lng], { icon: redIcon }).addTo(map);
-        const popup = createManagedPopup(cam.url);
-        marker.bindPopup(popup).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
-        marker.on('popupopen', () => popup.onPopupOpen());
-        marker.on('popupclose', () => popup.onPopupClose());
-        markerRefs.push({ marker, id: cam.id });
-      }
-    })();
+    cameras.forEach(cam => {
+      const marker = L.marker([cam.lat, cam.lng], { icon: redIcon }).addTo(map);
+      const popup = createManagedPopup(cam.url);
+      marker.bindPopup(popup).bindTooltip(cam.name, { permanent: true, direction: 'right', offset: [10, 0] });
+      marker.on('popupopen', () => popup.onPopupOpen());
+      marker.on('popupclose', () => popup.onPopupClose());
+    });
 
     document.getElementById('searchBox').addEventListener('input', () => {
       const val = document.getElementById('searchBox').value.trim().toLowerCase();
-      markerRefs.forEach(({ marker, id }) => {
-        if (id.toLowerCase().includes(val)) {
-          marker.openPopup();
-          map.setView(marker.getLatLng(), 18);
+      cameras.forEach(cam => {
+        if (cam.name.toLowerCase().includes(val) || val === '') {
+          // show popup on match
+          const mRef = map._layers;
+          Object.values(mRef).forEach(layer => {
+            if (layer._latlng && layer.getTooltip && layer.getTooltip().getContent() === cam.name) {
+              layer.openPopup(); map.setView(layer.getLatLng(), 18);
+            }
+          });
         }
       });
     });
