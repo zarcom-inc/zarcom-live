@@ -1,13 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- ... (без изменений в head) ... -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zarcom Cameras Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
+    .video-popup { width: 300px; height: 170px; margin: 0; overflow: hidden; }
+    video, iframe { width: 100%; height: 100%; border: none; display: block; object-fit: cover; margin: 0; padding: 0; }
+    .leaflet-popup-content-wrapper { max-width: 320px; border: none; box-shadow: none; background: transparent; }
+
+    .top-bar {
+      position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1100;
+      display: flex; align-items: center; gap: 6px;
+      background: white; padding: 10px; border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .top-bar input.search-box {
+      padding: 8px 12px; font-size: 14px;
+      border-radius: 20px; border: 1px solid #ccc;
+      flex: 1;
+    }
+    .top-bar .filter-btn,
+    .top-bar .toggle-btn {
+      padding: 6px 12px; border: none;
+      border-radius: 16px; background: #eee;
+      cursor: pointer; font-size: 14px;
+    }
+
+    #controls {
+      position: absolute; bottom: 20px; right: 20px; z-index: 1000;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    #controls button {
+      width: 40px; height: 40px; background: white;
+      border-radius: 50%; border: 1px solid rgba(0,0,0,0.2);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 20px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background-color 0.3s;
+    }
+    #controls button:hover { background: #f1f1f1; }
+  </style>
 </head>
 <body>
-  <!-- ... (без изменений в layout и controls) ... -->
+  <div class="top-bar">
+    <input type="text" id="searchBox" class="search-box" placeholder="Поиск камеры">
+    <button class="filter-btn" data-type="food">🍔</button>
+    <button class="filter-btn" data-type="parking">🅿️</button>
+    <button class="filter-btn" data-type="gas">⛽</button>
+    <button class="filter-btn" data-type="laundry">🧺</button>
+    <button class="filter-btn" data-type="building">🏢</button>
+    <button class="filter-btn" data-type="ev">🔌</button>
+    <button id="toggleMapBtn" class="toggle-btn" title="Показать/скрыть карту">🗺️</button>
+  </div>
+  <div id="map"></div>
+  <div id="controls">
+    <button id="zoom-in">+</button>
+    <button id="zoom-out">−</button>
+    <button id="locateBtn" title="Моя локация">🎯</button>
+  </div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    // ... (карта, иконки, locate, zoom и т.д.) ...
+    const map = L.map('map', { zoomControl: false });
+    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const bounds = L.latLngBounds([]);
+
+    document.getElementById('zoom-in').onclick = () => map.zoomIn();
+    document.getElementById('zoom-out').onclick = () => map.zoomOut();
+
+    document.getElementById('locateBtn').onclick = () => map.locate({ setView: true, maxZoom: 16 });
+    map.on('locationfound', e => {
+      L.marker(e.latlng, { icon: redIcon }).addTo(map).bindTooltip('Вы здесь').openTooltip();
+      map.setView(e.latlng, 16);
+    });
+    map.on('locationerror', () => alert('Не удалось получить геолокацию'));
+
+    document.getElementById('toggleMapBtn').onclick = () => {
+      if (map.hasLayer(tileLayer)) {
+        map.removeLayer(tileLayer);
+      } else {
+        tileLayer.addTo(map);
+      }
+    };
+
+    const redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
 
     function createManagedPopup(streamUrl) {
       const container = document.createElement('div');
@@ -48,7 +134,39 @@
       { id: 'Meat master', lat: 34.19412745338414, lng: -118.36468680858975, url: '/hls/cam11.m3u8', type: 'food' },
     ];
 
-    // ... (остальной JS: fitBounds, bindPopup, tooltip, поиск и т.д.) ...
+    const markerRefs = [];
+    (async () => {
+      for (const cam of markers) {
+        let lat, lng;
+        if (cam.lat !== undefined && cam.lng !== undefined) { lat = cam.lat; lng = cam.lng; }
+        else {
+          const data = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`).then(r => r.json());
+          if (!data.length) continue;
+          lat = +data[0].lat; lng = +data[0].lon;
+        }
+        bounds.extend([lat, lng]);
+        const marker = L.marker([lat, lng], { icon: redIcon }).addTo(map);
+        const popup = createManagedPopup(cam.url);
+        marker.bindPopup(popup, { maxWidth: 650 }).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
+        marker.on('popupopen', () => {
+          popup.onPopupOpen();
+          map.setView(marker.getLatLng(), map.getZoom(), { animate: true });
+        });
+        marker.on('popupclose', () => popup.onPopupClose());
+        markerRefs.push({ marker, id: cam.id });
+      }
+      map.fitBounds(bounds.pad(0.2));
+    })();
+
+    document.getElementById('searchBox').addEventListener('input', () => {
+      const val = document.getElementById('searchBox').value.trim().toLowerCase();
+      markerRefs.forEach(({ marker, id }) => {
+        if (id.toLowerCase().includes(val)) {
+          marker.openPopup();
+          map.setView(marker.getLatLng(), 18);
+        }
+      });
+    });
   </script>
 </body>
 </html>
