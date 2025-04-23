@@ -59,9 +59,17 @@
     #cameraListView ul li {
       padding: 8px 12px;
       border-bottom: 1px solid #ddd;
-      cursor: pointer;
     }
-    #cameraListView ul li:hover { background: #f5f5f5; }
+    #cameraListView ul li div.title {
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #cameraListView ul li div.video-list-container {
+      display: none;
+      width: 100%; height: 180px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
   </style>
 </head>
 <body>
@@ -101,7 +109,6 @@
     const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
     const bounds = L.latLngBounds([]);
 
-    // Zoom & locate controls
     document.getElementById('zoom-in').onclick = () => map.zoomIn();
     document.getElementById('zoom-out').onclick = () => map.zoomOut();
     document.getElementById('locateBtn').onclick = () => map.locate({ setView: true, maxZoom: 16 });
@@ -111,13 +118,11 @@
     });
     map.on('locationerror', () => alert('Не удалось получить геолокацию'));
 
-    // Toggle tile layer
     document.getElementById('toggleMapBtn').onclick = () => {
       if (map.hasLayer(tileLayer)) map.removeLayer(tileLayer);
       else tileLayer.addTo(map);
     };
 
-    // Video popup helper
     function createManagedPopup(streamUrl) {
       const container = document.createElement('div');
       container.className = 'video-popup';
@@ -143,7 +148,6 @@
       return container;
     }
 
-    // Marker data
     const markers = [
       { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8', type: 'building' },
       { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8', type: 'food' },
@@ -177,7 +181,6 @@
       map.fitBounds(bounds.pad(0.2));
     })();
 
-    // Search box
     document.getElementById('searchBox').addEventListener('input', () => {
       const val = document.getElementById('searchBox').value.trim().toLowerCase();
       markerRefs.forEach(({ marker, id }) => {
@@ -187,7 +190,6 @@
       });
     });
 
-    // List view toggle
     const toggleListBtn = document.getElementById('toggleListBtn');
     const mapContainer = document.getElementById('map');
     const listContainer = document.getElementById('cameraListView');
@@ -196,13 +198,44 @@
 
     function buildAlphabeticalList() {
       listUl.innerHTML = '';
-      const sorted = markerRefs.map(mr => ({ id: mr.id, marker: mr.marker })).sort((a,b) => a.id.localeCompare(b.id, undefined, {sensitivity: 'base'}));
-      sorted.forEach(({ id, marker }) => {
+      const sorted = markerRefs
+        .map(mr => ({ id: mr.id, url: mr.cam.url }))
+        .sort((a, b) => a.id.localeCompare(b.id, undefined, { sensitivity: 'base'}));
+
+      sorted.forEach(({ id, url }) => {
         const li = document.createElement('li');
-        li.textContent = id;
-        li.onclick = () => {
-          toggleView(); marker.openPopup(); map.setView(marker.getLatLng(), 18, { animate: true });
-        };
+        const title = document.createElement('div');
+        title.className = 'title';
+        title.textContent = id;
+
+        const videoContainer = document.createElement('div');
+        videoContainer.className = 'video-list-container';
+        const video = document.createElement('video');
+        video.controls = true; video.autoplay = false; video.muted = true; video.playsInline = true;
+        videoContainer.appendChild(video);
+        let hlsInstance;
+
+        title.addEventListener('click', () => {
+          if (videoContainer.style.display === 'block') {
+            videoContainer.style.display = 'none';
+            if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+            video.pause(); video.removeAttribute('src'); video.load();
+          } else {
+            videoContainer.style.display = 'block';
+            if (Hls.isSupported()) {
+              hlsInstance = new Hls();
+              hlsInstance.loadSource(url);
+              hlsInstance.attachMedia(video);
+              hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+            } else {
+              video.src = url;
+              video.onloadedmetadata = () => video.play();
+            }
+          }
+        });
+
+        li.appendChild(title);
+        li.appendChild(videoContainer);
         listUl.appendChild(li);
       });
     }
