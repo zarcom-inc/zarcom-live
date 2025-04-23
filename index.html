@@ -49,21 +49,27 @@
     <button class="filter-btn" data-type="food">🍔</button>
     <button class="filter-btn" data-type="parking">Ⓜ️</button>
     <button class="filter-btn" data-type="gas">⛽</button>
-    <button class="filter-btn" data-type="laundry">🮺</button>
+    <button class="filter-btn" data-type="laundry">🧺</button>
     <button class="filter-btn" data-type="building">🏢</button>
     <button class="filter-btn" data-type="ev">🔌</button>
-    <button id="toggleMapBtn" class="toggle-btn" title="Показать/скрыть карту">🗘️</button>
+    <button id="toggleMapBtn" class="toggle-btn" title="Показать/скрыть карту">🗺️</button>
   </div>
   <div id="map"></div>
   <div id="controls">
     <button id="zoom-in">+</button>
     <button id="zoom-out">−</button>
-    <button id="locateBtn" title="Моя локация">🌯</button>
+    <button id="locateBtn" title="Моя локация">🎯</button>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
+    const redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
+
     const map = L.map('map', { zoomControl: false });
     const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
@@ -89,11 +95,7 @@
       }
     };
 
-    const redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-    });
+    
 
     function createManagedPopup(streamUrl) {
       const container = document.createElement('div');
