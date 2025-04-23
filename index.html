@@ -41,13 +41,14 @@
       transition: background-color 0.3s;
     }
     #controls button:hover { background: #f1f1f1; }
-  #cameraList {
+  
+    #cameraList {
       display: none;
       position: absolute;
       top: 60px;
-      left: 10px;
       bottom: 10px;
-      width: 300px;
+      left: 10px;
+      right: 10px;
       overflow-y: auto;
       background: white;
       padding: 10px;
@@ -56,11 +57,14 @@
       z-index: 1001;
     }
     .camera-item {
-      margin-bottom: 10px;
+      margin-bottom: 20px;
       font-size: 15px;
       cursor: pointer;
-      border-bottom: 1px solid #eee;
-      padding: 5px 0;
+    }
+    .camera-item video {
+      width: 100%;
+      border-radius: 8px;
+      margin-top: 4px;
     }
     </style>
 </head>
@@ -75,8 +79,9 @@
     <button class="filter-btn" data-type="ev">🔌</button>
     <button id="toggleMapBtn" class="toggle-btn" title="Показать/скрыть карту">🗺️</button>
   </div>
-  <div id="map"></div>
   <div id="cameraList"></div>
+  <div id="map"></div>
+  
 
   <div id="controls">
     <button id="zoom-in">+</button>
@@ -95,8 +100,6 @@
         const video = document.createElement('video');
         video.src = cam.url;
         video.controls = true;
-        video.style.width = '100%';
-        video.style.marginTop = '4px';
         div.appendChild(video);
         list.appendChild(div);
       }
