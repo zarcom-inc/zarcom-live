@@ -42,30 +42,7 @@
     }
     #controls button:hover { background: #f1f1f1; }
   
-    #cameraList {
-      display: none;
-      position: absolute;
-      top: 60px;
-      bottom: 10px;
-      left: 10px;
-      right: 10px;
-      overflow-y: auto;
-      background: white;
-      padding: 10px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      z-index: 1001;
-    }
-    .camera-item {
-      margin-bottom: 20px;
-      font-size: 15px;
-      cursor: pointer;
-    }
-    .camera-item video {
-      width: 100%;
-      border-radius: 8px;
-      margin-top: 4px;
-    }
+    
     </style>
 </head>
 <body>
@@ -79,7 +56,6 @@
     <button class="filter-btn" data-type="ev">🔌</button>
     <button id="toggleMapBtn" class="toggle-btn" title="Показать/скрыть карту">🗺️</button>
   </div>
-  <div id="cameraList"></div>
   <div id="map"></div>
   
 
@@ -117,17 +93,12 @@
     map.on('locationerror', () => alert('Не удалось получить геолокацию'));
 
     document.getElementById('toggleMapBtn').onclick = () => {
-      const mapEl = document.getElementById('map');
-      const listEl = document.getElementById('cameraList');
-      if (mapEl.style.display !== 'none') {
-        mapEl.style.display = 'none';
-        listEl.style.display = 'block';
-        renderCameraList();
-      } else {
-        mapEl.style.display = 'block';
-        listEl.style.display = 'none';
-      }
-    };
+  if (map.hasLayer(tileLayer)) {
+    map.removeLayer(tileLayer);
+  } else {
+    tileLayer.addTo(map);
+  }
+};
 
     
 
@@ -204,25 +175,7 @@
         }
       });
     });
-  function renderCameraList() {
-  const list = document.getElementById('cameraList');
-  list.innerHTML = '';
-  const sorted = markers.slice().sort((a, b) => a.id.localeCompare(b.id));
-  for (const cam of sorted) {
-    const div = document.createElement('div');
-    div.className = 'camera-item';
-    const label = document.createElement('div');
-    label.textContent = cam.id;
-    label.style.fontWeight = 'bold';
-    div.appendChild(label);
-    const video = document.createElement('video');
-    video.src = cam.url;
-    video.controls = true;
-    video.style.width = '100%';
-    video.style.marginTop = '4px';
-    div.appendChild(video);
-    list.appendChild(div);
-  }
+  
 }
 </script>
 </body>
