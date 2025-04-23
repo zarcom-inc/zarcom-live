@@ -89,23 +89,30 @@
     <button id="locateBtn" title="Моя локация">🎯</button>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">function renderCameraList() {
-      const list = document.getElementById('cameraList');
-      list.innerHTML = '';
-      const sorted = markers.slice().sort((a, b) => a.id.localeCompare(b.id));
-      for (const cam of sorted) {
-        const div = document.createElement('div');
-        div.className = 'camera-item';
-        div.textContent = cam.id;
-        const video = document.createElement('video');
-        video.src = cam.url;
-        video.controls = true;
-        div.appendChild(video);
-        list.appendChild(div);
-      }
-    }
-  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+  function renderCameraList() {
+    const list = document.getElementById('cameraList');
+    list.innerHTML = '';
+    const sorted = markers.slice().sort((a, b) => a.id.localeCompare(b.id));
+    for (const cam of sorted) {
+      const div = document.createElement('div');
+      div.className = 'camera-item';
+      const label = document.createElement('div');
+      label.textContent = cam.id;
+      label.style.fontWeight = 'bold';
+      div.appendChild(label);
+      const video = document.createElement('video');
+      video.src = cam.url;
+      video.controls = true;
+      video.style.width = '100%';
+      video.style.marginTop = '4px';
+      div.appendChild(video);
+      list.appendChild(div);
+    }
+  }
+</script>
   <script>
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
