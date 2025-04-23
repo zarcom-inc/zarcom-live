@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -28,6 +28,9 @@
       border-radius: 16px; background: #eee;
       cursor: pointer; font-size: 14px;
     }
+    .top-bar .toggle-btn.active {
+      background: #ddd;
+    }
 
     #controls {
       position: absolute; bottom: 20px; right: 20px; z-index: 1000;
@@ -41,9 +44,25 @@
       transition: background-color 0.3s;
     }
     #controls button:hover { background: #f1f1f1; }
-  
-    
-    </style>
+
+    /* List view styles */
+    #cameraListView {
+      display: none;
+      position: absolute;
+      top: 60px; bottom: 0; left: 0; right: 0;
+      background: white;
+      overflow-y: auto;
+      z-index: 1000;
+      padding: 10px;
+    }
+    #cameraListView ul { list-style: none; padding: 0; margin: 0; }
+    #cameraListView ul li {
+      padding: 8px 12px;
+      border-bottom: 1px solid #ddd;
+      cursor: pointer;
+    }
+    #cameraListView ul li:hover { background: #f5f5f5; }
+  </style>
 </head>
 <body>
   <div class="top-bar">
@@ -55,9 +74,13 @@
     <button class="filter-btn" data-type="building">🏢</button>
     <button class="filter-btn" data-type="ev">🔌</button>
     <button id="toggleMapBtn" class="toggle-btn" title="Показать/скрыть карту">🗺️</button>
+    <button id="toggleListBtn" class="toggle-btn" title="Список камер">📋</button>
   </div>
+
   <div id="map"></div>
-  
+  <div id="cameraListView">
+    <ul id="cameraListAlphabetical"></ul>
+  </div>
 
   <div id="controls">
     <button id="zoom-in">+</button>
@@ -67,7 +90,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
   <script>
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -76,15 +98,12 @@
     });
 
     const map = L.map('map', { zoomControl: false });
-    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
+    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
     const bounds = L.latLngBounds([]);
 
+    // Zoom & locate controls
     document.getElementById('zoom-in').onclick = () => map.zoomIn();
     document.getElementById('zoom-out').onclick = () => map.zoomOut();
-
     document.getElementById('locateBtn').onclick = () => map.locate({ setView: true, maxZoom: 16 });
     map.on('locationfound', e => {
       L.marker(e.latlng, { icon: redIcon }).addTo(map).bindTooltip('Вы здесь').openTooltip();
@@ -92,16 +111,13 @@
     });
     map.on('locationerror', () => alert('Не удалось получить геолокацию'));
 
+    // Toggle tile layer
     document.getElementById('toggleMapBtn').onclick = () => {
-  if (map.hasLayer(tileLayer)) {
-    map.removeLayer(tileLayer);
-  } else {
-    tileLayer.addTo(map);
-  }
-};
+      if (map.hasLayer(tileLayer)) map.removeLayer(tileLayer);
+      else tileLayer.addTo(map);
+    };
 
-    
-
+    // Video popup helper
     function createManagedPopup(streamUrl) {
       const container = document.createElement('div');
       container.className = 'video-popup';
@@ -122,13 +138,12 @@
       };
       container.onPopupClose = () => {
         if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
+        video.pause(); video.removeAttribute('src'); video.load();
       };
       return container;
     }
 
+    // Marker data
     const markers = [
       { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8', type: 'building' },
       { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8', type: 'food' },
@@ -138,8 +153,7 @@
       { id: 'BJ-1', lat: 34.20205288034795, lng: -118.40886141624648, url: '/hls/cam8.m3u8', type: 'parking' },
       { id: 'BJ-2', lat: 34.20225288034795, lng: -118.40866141624648, url: '/hls/cam9.m3u8', type: 'parking' },
       { id: 'Home', lat: 34.207930027750535, lng: -118.36923043862326, url: '/hls/cam10.m3u8', type: 'building' },
-      { id: 'Meat master', lat: 34.19412745338414, lng: -118.36468680858975, url: '/hls/cam11.m3u8', type: 'food' },
-      
+      { id: 'Meat master', lat: 34.19412745338414, lng: -118.36468680858975, url: '/hls/cam11.m3u8', type: 'food' }
     ];
 
     const markerRefs = [];
@@ -156,24 +170,59 @@
         const marker = L.marker([lat, lng], { icon: redIcon }).addTo(map);
         const popup = createManagedPopup(cam.url);
         marker.bindPopup(popup, { maxWidth: 650 }).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
-        marker.on('popupopen', () => {
-          popup.onPopupOpen();
-          map.setView(marker.getLatLng(), map.getZoom(), { animate: true });
-        });
+        marker.on('popupopen', () => { popup.onPopupOpen(); map.setView(marker.getLatLng(), map.getZoom(), { animate: true }); });
         marker.on('popupclose', () => popup.onPopupClose());
-        markerRefs.push({ marker, id: cam.id });
+        markerRefs.push({ marker, id: cam.id, cam });
       }
       map.fitBounds(bounds.pad(0.2));
     })();
 
+    // Search box
     document.getElementById('searchBox').addEventListener('input', () => {
       const val = document.getElementById('searchBox').value.trim().toLowerCase();
       markerRefs.forEach(({ marker, id }) => {
         if (id.toLowerCase().includes(val)) {
-          marker.openPopup();
-          map.setView(marker.getLatLng(), 18);
+          marker.openPopup(); map.setView(marker.getLatLng(), 18);
         }
       });
-    });</script>
+    });
+
+    // List view toggle
+    const toggleListBtn = document.getElementById('toggleListBtn');
+    const mapContainer = document.getElementById('map');
+    const listContainer = document.getElementById('cameraListView');
+    const listUl = document.getElementById('cameraListAlphabetical');
+    let listMode = false;
+
+    function buildAlphabeticalList() {
+      listUl.innerHTML = '';
+      const sorted = markerRefs.map(mr => ({ id: mr.id, marker: mr.marker })).sort((a,b) => a.id.localeCompare(b.id, undefined, {sensitivity: 'base'}));
+      sorted.forEach(({ id, marker }) => {
+        const li = document.createElement('li');
+        li.textContent = id;
+        li.onclick = () => {
+          toggleView(); marker.openPopup(); map.setView(marker.getLatLng(), 18, { animate: true });
+        };
+        listUl.appendChild(li);
+      });
+    }
+
+    function toggleView() {
+      listMode = !listMode;
+      if (listMode) {
+        mapContainer.style.display = 'none';
+        listContainer.style.display = 'block';
+        buildAlphabeticalList();
+        toggleListBtn.classList.add('active');
+      } else {
+        listContainer.style.display = 'none';
+        mapContainer.style.display = 'block';
+        toggleListBtn.classList.remove('active');
+        map.invalidateSize();
+      }
+    }
+
+    toggleListBtn.addEventListener('click', toggleView);
+  </script>
 </body>
 </html>
