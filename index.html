@@ -6,56 +6,66 @@
   <title>Zarcom Cameras Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
-    .video-popup { width: 300px; height: 170px; overflow: hidden; }
+    html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
+    #map { height: 100%; width: 100%; }
+    .video-popup { width: 320px; height: 180px; }
     .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
-
-    /* Top bar with only map/list toggles */
+    
     .top-bar {
-      position: absolute;
-      top: 10px; left: 10px;
-      z-index: 1100;
+      position: absolute; top: 10px; left: 10px; z-index: 1100;
       display: flex; gap: 8px;
     }
     .top-bar button {
-      padding: 8px;
-      border: none;
-      border-radius: 4px;
-      background: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-      cursor: pointer;
-      font-size: 18px;
+      padding: 8px; border: none; border-radius: 4px;
+      background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      cursor: pointer; font-size: 18px;
     }
     .top-bar button.active { background: #ddd; }
 
-    /* List view container */
     #cameraListView {
       display: none;
-      position: absolute;
-      top: 50px; bottom: 0; left: 0; right: 0;
-      background: #f9f9f9;
-      overflow-y: auto;
-      z-index: 1000;
+      position: absolute; top: 50px; left: 0; right: 0; bottom: 0;
+      background: #f9f9f9; overflow-y: auto; z-index: 1000;
       padding: 10px;
     }
     #cameraListView ul { list-style: none; margin: 0; padding: 0; }
     #cameraListView li {
-      padding: 10px;
-      border-bottom: 1px solid #ccc;
+      margin-bottom: 16px; padding: 8px;
+      background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    #cameraListView li:hover { background: #eee; }
-    #cameraListView .cam-title {
-      font-weight: bold;
-      cursor: pointer;
-      margin-bottom: 6px;
+    .cam-title { font-weight: bold; cursor: pointer; margin-bottom: 6px; }
+    .cam-video {
+      display: none; position: relative;
+      width: 100%; max-width: 640px;
+      padding-top: 56.25%; /* 16:9 */
+      margin: 0 auto;
+      background: #000;
+    }
+    .cam-video video {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%; object-fit: cover;
+    }
+      /* Center list container and unify video resolution */
+    #cameraListView {
+      display: none;
+      position: absolute;
+      top: 60px;
+      bottom: 0;
+      width: 80%;
+      max-width: 600px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      overflow-y: auto;
+      z-index: 1000;
+      padding: 10px;
     }
     #cameraListView .cam-video {
       display: none;
       position: relative;
       width: 100%;
-      max-width: 600px;
-      margin-bottom: 16px;
       padding-top: 56.25%; /* 16:9 aspect ratio */
+      margin-bottom: 16px;
     }
     #cameraListView .cam-video video {
       position: absolute;
@@ -64,55 +74,47 @@
       width: 100%;
       height: 100%;
     }
-    #cameraListView .cam-video video {
-      width: 100%; height: auto;
-    }
   </style>
 </head>
 <body>
   <div class="top-bar">
-    <button id="toggleMapBtn" class="active">🗺️</button>
-    <button id="toggleListBtn">📋</button>
+    <button id="toggleMapBtn" class="active">🗺️ Map</button>
+    <button id="toggleListBtn">📋 List</button>
   </div>
-
   <div id="map"></div>
   <div id="cameraListView"><ul id="cameraList"></ul></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    // Initialize map
+    // Initialize map and icon
     const map = L.map('map', { zoomControl: true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+      iconSize: [25,41], iconAnchor: [12,41], popupAnchor: [1,-34], shadowSize: [41,41]
     });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-    // Popup helper for map markers
+    // Helper to create map popup
     function createVideoPopup(url) {
-      const div = document.createElement('div');
-      div.className = 'video-popup';
+      const container = document.createElement('div');
+      container.className = 'video-popup';
       const video = document.createElement('video');
-      video.controls = true;
-      video.autoplay = false;
-      video.muted = true;
-      video.style.width = '100%';
-      video.style.height = '100%';
+      video.controls = true; video.autoplay = false; video.muted = true;
+      video.style.width = '100%'; video.style.height = '100%';
       if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(url);
-        hls.attachMedia(video);
+        const hls = new Hls(); hls.loadSource(url); hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+        video._hls = hls;
       } else {
         video.src = url;
       }
-      div.appendChild(video);
-      return div;
+      container.appendChild(video);
+      return container;
     }
 
-    // Camera definitions
+    // Camera data
     const cameras = [
       { id: 'OFFICE', lat: 34.1372, lng: -118.3550, url: '/hls/cam1.m3u8' },
       { id: 'BBQ', lat: 34.1602, lng: -118.2547, url: '/hls/cam2.m3u8' },
@@ -125,83 +127,55 @@
       { id: 'Meat Master', lat: 34.19413, lng: -118.36469, url: '/hls/cam11.m3u8' }
     ];
 
-    const markers = [];
+    // Add markers to map
+    const bounds = [];
     cameras.forEach(cam => {
-      const m = L.marker([cam.lat, cam.lng], { icon: redIcon }).addTo(map)
-        .bindTooltip(cam.id, { permanent: true, direction: 'right' });
-      m.bindPopup(createVideoPopup(cam.url));
-      markers.push({ marker: m, id: cam.id });
+      const marker = L.marker([cam.lat, cam.lng], { icon: redIcon }).addTo(map)
+        .bindTooltip(cam.id, { permanent: true, direction: 'right' })
+        .bindPopup(createVideoPopup(cam.url));
+      bounds.push([cam.lat, cam.lng]);
     });
-    map.fitBounds(markers.map(m => m.marker.getLatLng()));
+    map.fitBounds(bounds);
 
-    // Build list view with inline video
+    // Build list view
     function buildList() {
-      const ul = document.getElementById('cameraList');
-      ul.innerHTML = '';
-      cameras.sort((a, b) => a.id.localeCompare(b.id)).forEach(cam => {
+      const ul = document.getElementById('cameraList'); ul.innerHTML = '';
+      cameras.sort((a,b)=>a.id.localeCompare(b.id)).forEach(cam=>{
         const li = document.createElement('li');
-        const title = document.createElement('div');
-        title.textContent = cam.id;
-        title.className = 'cam-title';
-        const videoContainer = document.createElement('div');
-        videoContainer.className = 'cam-video';
-        const video = document.createElement('video');
-        video.controls = true;
-        video.muted = true;
-        video.style.width = '100%';
-        video.style.height = '100%';
-        video.style.position = 'absolute';
-        video.style.top = '0';
-        video.style.left = '0';
-        videoContainer.appendChild(video);
-
+        const title = document.createElement('div'); title.className = 'cam-title'; title.textContent = cam.id;
+        const videoBox = document.createElement('div'); videoBox.className = 'cam-video';
+        const video = document.createElement('video'); video.controls=true; video.muted=true;
+        videoBox.appendChild(video);
         title.onclick = () => {
-          const isVisible = videoContainer.style.display === 'block';
-          if (isVisible) {
-            if (video._hls) {
-              video._hls.destroy();
-              delete video._hls;
-            }
-            video.pause();
-            video.currentTime = 0;
-            videoContainer.style.display = 'none';
+          const shown = videoBox.style.display==='block';
+          if(shown){
+            if(video._hls){ video._hls.destroy(); delete video._hls; }
+            video.pause(); videoBox.style.display='none';
           } else {
-            if (Hls.isSupported()) {
-              const hls = new Hls();
-              hls.loadSource(cam.url);
-              hls.attachMedia(video);
-              hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-              video._hls = hls;
-            } else {
-              video.src = cam.url;
-              video.onloadedmetadata = () => video.play();
-            }
-            videoContainer.style.display = 'block';
+            if(Hls.isSupported()){ const hls=new Hls(); hls.loadSource(cam.url); hls.attachMedia(video);
+              hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play()); video._hls=hls;
+            } else { video.src=cam.url; video.onloadedmetadata=()=>video.play(); }
+            videoBox.style.display='block';
           }
         };
-
-        li.appendChild(title);
-        li.appendChild(videoContainer);
-        ul.appendChild(li);
+        li.appendChild(title); li.appendChild(videoBox); ul.appendChild(li);
       });
     }
 
-    // Toggle between map and list
-    const toggleMapBtn = document.getElementById('toggleMapBtn');
-    const toggleListBtn = document.getElementById('toggleListBtn');
-    toggleMapBtn.onclick = () => {
-      document.getElementById('map').style.display = 'block';
-      document.getElementById('cameraListView').style.display = 'none';
-      toggleMapBtn.classList.add('active');
-      toggleListBtn.classList.remove('active');
+    // Toggle buttons
+    const mapBtn = document.getElementById('toggleMapBtn');
+    const listBtn = document.getElementById('toggleListBtn');
+    mapBtn.onclick = () => {
+      document.getElementById('map').style.display='block';
+      document.getElementById('cameraListView').style.display='none';
+      mapBtn.classList.add('active'); listBtn.classList.remove('active');
       map.invalidateSize();
     };
-    toggleListBtn.onclick = () => {
+    listBtn.onclick = () => {
       buildList();
-      document.getElementById('map').style.display = 'none';
-      document.getElementById('cameraListView').style.display = 'block';
-      toggleListBtn.classList.add('active');
-      toggleMapBtn.classList.remove('active');
+      document.getElementById('map').style.display='none';
+      document.getElementById('cameraListView').style.display='block';
+      listBtn.classList.add('active'); mapBtn.classList.remove('active');
     };
   </script>
 </body>
