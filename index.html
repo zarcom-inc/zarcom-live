@@ -208,6 +208,15 @@
           map.setView(marker.getLatLng(), 18);
         }
       });
-    });</script>
+    });document.getElementById('archiveBtn').onclick = () => {
+  const archiveEl = document.getElementById('archiveView');
+  const mapEl = document.getElementById('map');
+  if (archiveEl && mapEl) {
+    const isVisible = archiveEl.style.display !== 'none';
+    archiveEl.style.display = isVisible ? 'none' : 'block';
+    mapEl.style.display = isVisible ? 'block' : 'none';
+  }
+};
+</script>
 </body>
 </html>
