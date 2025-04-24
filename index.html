@@ -6,13 +6,18 @@
   <title>Zarcom Cameras Map with Archive</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
-    #map { height: 100%; width: 100%; }
+    html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+    /* Orange header */
+    header.site-header { position: absolute; top: 0; left: 0; width: 100%; height: 50px; background: orange; color: #fff; display: flex; align-items: center; padding: 0 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 1200; }
+    header.site-header h1 { margin: 0; font-size: 18px; }
+
+    #map { position: absolute; top: 50px; bottom: 0; width: 100%; }
+    #cameraListView { display: none; position: absolute; top: 50px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 600px; bottom: 0; background: #f9f9f9; overflow-y: auto; z-index: 1000; padding: 10px; }
 
     /* Popup & list archive styling */
     .video-popup, .cam-video { width: 320px; }
-    .video-popup video, .cam-video video { width: 100%; height: 180px; object-fit: cover; }
-    .video-popup .popup-title { font-weight: bold; text-align: center; margin-bottom: 4px; }
+    .video-popup video, .cam-video video { width: 100%; height: 180px; object-fit: cover; display: none; }
+    .video-popup .popup-title { font-weight: bold; text-align: center; margin-bottom: 4px; color: #333; }
     .popup-controls { display: flex; justify-content: space-between; margin: 4px 0; }
     .popup-controls button, .popup-controls select { flex: 1; margin-right: 4px; padding: 4px; font-size: 12px; }
     .popup-controls select { margin-right: 0; }
@@ -20,19 +25,20 @@
     .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: transparent; box-shadow: none; }
     .leaflet-popup-content { margin: 0; padding: 0; }
 
-    .top-bar { position: absolute; top: 10px; left: 10px; z-index: 1100; display: flex; gap: 8px; }
-    .top-bar button { padding: 8px; border: none; border-radius: 4px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer; font-size: 18px; }
+    .top-bar { position: absolute; top: 60px; left: 16px; z-index: 1100; display: flex; gap: 8px; }
+    .top-bar button { padding: 8px; border: none; border-radius: 4px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer; font-size: 16px; }
     .top-bar button.active { background: #ddd; }
 
-    #cameraListView { display: none; position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 600px; height: calc(100% - 60px); background: #f9f9f9; overflow-y: auto; z-index: 1000; padding: 10px; }
     #cameraListView ul { list-style: none; margin: 0; padding: 0; }
     #cameraListView li { margin-bottom: 16px; padding: 8px; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .cam-title { font-weight: bold; margin-bottom: 6px; }
-    .cam-video { display: none; position: relative; width: 100%; padding-top: 56.25%; background: #000; }
-    .cam-video video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+    .cam-title { font-weight: bold; margin-bottom: 6px; color: #333; }
+    .cam-video { display: none; position: relative; width: 100%; padding-top: 56.25%; background: #000; margin-top: 8px; }
   </style>
 </head>
 <body>
+  <header class="site-header">
+    <h1>Zarcom Cameras Monitoring</h1>
+  </header>
   <div class="top-bar">
     <button id="toggleMapBtn" class="active">🗺️ Map</button>
     <button id="toggleListBtn">📋 List</button>
@@ -81,13 +87,27 @@
       const dates = getLastDates(3);
       dates.forEach(d => sel.append(new Option(d, d)));
 
-      btnLive.onclick = () => { sel.style.display = 'none'; attachHls(video, cam.urlLive); };
+      let livePlaying = false;
+      btnLive.onclick = () => {
+        if (livePlaying) {
+          video.pause();
+          if (video._hls) { video._hls.destroy(); delete video._hls; }
+          video.style.display = 'none';
+          livePlaying = false;
+        } else {
+          sel.style.display = 'none';
+          video.style.display = 'block';
+          attachHls(video, cam.urlLive);
+          livePlaying = true;
+        }
+      };
       btnArchive.onclick = () => {
         sel.style.display = 'block';
+        video.style.display = 'block';
         attachHls(video, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
       };
       sel.onchange = () => btnArchive.onclick();
-      btnLive.onclick();
+
       return container;
     }
 
@@ -122,47 +142,6 @@
       bounds.push([cam.lat, cam.lng]);
     });
     map.fitBounds(bounds);
-
-    // List view construction with archive controls
-    function buildList() {
-      const ul = document.getElementById('cameraList'); ul.innerHTML = '';
-      cameras.forEach(cam => {
-        const li = document.createElement('li');
-        const title = document.createElement('div'); title.className = 'cam-title'; title.textContent = cam.id;
-        const controls = document.createElement('div'); controls.className = 'popup-controls';
-        const btnLive = document.createElement('button'); btnLive.textContent = 'Live';
-        const btnArchive = document.createElement('button'); btnArchive.textContent = 'Archive';
-        const sel = document.createElement('select'); sel.style.display = 'none';
-        // populate dates
-        getLastDates(3).forEach(d => sel.append(new Option(d, d)));
-        controls.append(btnLive, btnArchive, sel);
-        const box = document.createElement('div'); box.className = 'cam-video';
-        const vid = document.createElement('video'); vid.controls=true; vid.muted=true;
-        box.append(vid);
-        btnLive.onclick = () => { sel.style.display='none'; box.style.display='block'; attachHls(vid, cam.urlLive); };
-        btnArchive.onclick = () => { sel.style.display='block'; box.style.display='block'; attachHls(vid, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`); };
-        sel.onchange = () => btnArchive.onclick();
-        // default to live hidden until button click
-        li.append(title, controls, box);
-        ul.append(li);
-      });
-    }
-
-    // Toggle map/list
-    document.getElementById('toggleMapBtn').onclick = () => {
-      document.getElementById('map').style.display='block';
-      document.getElementById('cameraListView').style.display='none';
-      document.getElementById('toggleMapBtn').classList.add('active');
-      document.getElementById('toggleListBtn').classList.remove('active');
-      map.invalidateSize();
-    };
-    document.getElementById('toggleListBtn').onclick = () => {
-      buildList();
-      document.getElementById('map').style.display='none';
-      document.getElementById('cameraListView').style.display='block';
-      document.getElementById('toggleListBtn').classList.add('active');
-      document.getElementById('toggleMapBtn').classList.remove('active');
-    };
   </script>
 </body>
 </html>
