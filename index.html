@@ -218,8 +218,7 @@
     mapEl.style.display = isVisible ? 'block' : 'none';
   }
 };
-  map.invalidateSize();
+  if (map) map.invalidateSize();
 </script>
 </body>
-</html>
 </html>
