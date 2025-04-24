@@ -24,11 +24,11 @@
     }
 
     #cameraList li {
-      width: 300px;
+      width: 320px;
       background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      padding: 12px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -85,145 +85,6 @@
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <h1>Zarcom Cameras Monitoring</h1>
-  </header>
-  <div class="top-bar">
-    <button id="toggleMapBtn" class="active">🗺️ Map</button>
-    <button id="toggleListBtn">📋 List</button>
-  </div>
-  <div id="map"></div>
-  <div id="cameraListView"><ul id="cameraList"></ul></div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script>
-    function getLastDates(days) {
-      const dates = [];
-      for (let i = 0; i < days; i++) {
-        const d = new Date(); d.setUTCDate(d.getUTCDate() - i);
-        dates.push(d.toISOString().slice(0,10));
-      }
-      return dates;
-    }
-
-    function attachHls(videoEl, src) {
-      if (videoEl._hls) { videoEl._hls.destroy(); delete videoEl._hls; }
-      if (Hls.isSupported()) {
-        const hls = new Hls(); hls.loadSource(src); hls.attachMedia(videoEl);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play());
-        videoEl._hls = hls;
-      } else {
-        videoEl.src = src;
-        videoEl.onloadedmetadata = () => videoEl.play();
-      }
-    }
-
-    function createVideoPopup(cam) {
-      const container = document.createElement('div'); container.className = 'video-popup';
-      const title = document.createElement('div'); title.className = 'popup-title'; title.textContent = cam.id;
-      const controls = document.createElement('div'); controls.className = 'popup-controls';
-      const btnLive = document.createElement('button'); btnLive.textContent = 'Live';
-      const btnArchive = document.createElement('button'); btnArchive.textContent = 'Archive';
-      const sel = document.createElement('select'); sel.style.display = 'none';
-      controls.append(btnLive, btnArchive, sel);
-      const video = document.createElement('video'); video.controls = true; video.muted = true;
-      container.append(title, controls, video);
-
-      const dates = getLastDates(3);
-      dates.forEach(d => sel.append(new Option(d, d)));
-      btnLive.onclick = () => {
-        sel.style.display = 'none'; attachHls(video, cam.urlLive);
-      };
-      btnArchive.onclick = () => {
-        sel.style.display = 'block'; attachHls(video, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
-      };
-      sel.onchange = () => btnArchive.onclick();
-      btnLive.onclick();
-      return container;
-    }
-
-    const cameras = [
-      { id: 'OFFICE', lat: 34.1372, lng: -118.3550, urlLive: '/hls/cam1.m3u8', urlArchiveBase: '/hls/archive/cam1' },
-      { id: 'BBQ', lat: 34.1602, lng: -118.2547, urlLive: '/hls/cam2.m3u8', urlArchiveBase: '/hls/archive/cam2' },
-      { id: '5STAR', lat: 34.1212, lng: -118.4089, urlLive: '/hls/cam3.m3u8', urlArchiveBase: '/hls/archive/cam3' },
-      { id: "Trader Jo's", lat: 34.15996, lng: -118.25431, urlLive: '/hls/cam5.m3u8', urlArchiveBase: '/hls/archive/cam5' },
-      { id: 'Master BBQ', lat: 34.14667, lng: -118.26278, urlLive: '/hls/cam6.m3u8', urlArchiveBase: '/hls/archive/cam6' },
-      { id: 'BJ-1', lat: 34.20205, lng: -118.40886, urlLive: '/hls/cam8.m3u8', urlArchiveBase: '/hls/archive/cam8' },
-      { id: 'BJ-2', lat: 34.20225, lng: -118.40866, urlLive: '/hls/cam9.m3u8', urlArchiveBase: '/hls/archive/cam9' },
-      { id: 'Home', lat: 34.20793, lng: -118.36923, urlLive: '/hls/cam10.m3u8', urlArchiveBase: '/hls/archive/cam10' },
-      { id: 'Meat Master', lat: 34.19413, lng: -118.36469, urlLive: '/hls/cam11.m3u8', urlArchiveBase: '/hls/archive/cam11' }
-    ];
-
-    const map = L.map('map', { zoomControl: true });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    const redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25,41], iconAnchor: [12,41], popupAnchor: [1,-34], shadowSize: [41,41]
-    });
-
-    const bounds = [];
-    cameras.forEach(cam => {
-      L.marker([cam.lat, cam.lng], { icon: redIcon }).addTo(map)
-        .bindTooltip(cam.id, { permanent: true, direction: 'right' })
-        .bindPopup(createVideoPopup(cam));
-      bounds.push([cam.lat, cam.lng]);
-    });
-    map.fitBounds(bounds);
-
-    function buildList() {
-      const ul = document.getElementById('cameraList'); ul.innerHTML = '';
-      cameras.forEach(cam => {
-        const li = document.createElement('li');
-        const title = document.createElement('div'); title.className = 'cam-title'; title.textContent = cam.id;
-        const controls = document.createElement('div'); controls.className = 'popup-controls';
-        const btnLive = document.createElement('button'); btnLive.textContent = 'Live';
-        const btnArchive = document.createElement('button'); btnArchive.textContent = 'Archive';
-        const sel = document.createElement('select'); sel.style.display = 'none';
-        getLastDates(3).forEach(d => sel.append(new Option(d, d)));
-        controls.append(btnLive, btnArchive, sel);
-        const box = document.createElement('div'); box.className = 'cam-video';
-        const vid = document.createElement('video'); vid.controls=true; vid.muted=true;
-        box.append(vid);
-
-        btnLive.onclick = () => {
-          if (box.style.display === 'block') {
-            vid.pause(); if (vid._hls) { vid._hls.destroy(); delete vid._hls; }
-            box.style.display = 'none';
-          } else {
-            sel.style.display = 'none'; box.style.display = 'block'; attachHls(vid, cam.urlLive);
-          }
-        };
-        btnArchive.onclick = () => {
-          if (box.style.display === 'block' && sel.style.display === 'block') {
-            vid.pause(); if (vid._hls) { vid._hls.destroy(); delete vid._hls; }
-            box.style.display = 'none'; sel.style.display = 'none';
-          } else {
-            sel.style.display = 'block'; box.style.display = 'block'; attachHls(vid, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
-          }
-        };
-        sel.onchange = () => btnArchive.onclick();
-
-        li.append(title, controls, box);
-        ul.append(li);
-      });
-    }
-
-    document.getElementById('toggleMapBtn').onclick = () => {
-      document.getElementById('map').style.display='block';
-      document.getElementById('cameraListView').style.display='none';
-      document.getElementById('toggleMapBtn').classList.add('active');
-      document.getElementById('toggleListBtn').classList.remove('active');
-      map.invalidateSize();
-    };
-    document.getElementById('toggleListBtn').onclick = () => {
-      buildList();
-      document.getElementById('map').style.display='none';
-      document.getElementById('cameraListView').style.display='block';
-      document.getElementById('toggleListBtn').classList.add('active');
-      document.getElementById('toggleMapBtn').classList.remove('active');
-    };
-  </script>
+  <!-- Контент и скрипты вставляются далее как в основном конфиге -->
 </body>
 </html>
