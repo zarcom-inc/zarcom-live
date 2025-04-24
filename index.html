@@ -56,16 +56,12 @@
     /* List View */
     #cameraListView {
       display: none;
-      position: absolute;
-      top: 60px; bottom: 0; left: 0; right: 0;
-      background: white;
-      overflow-y: auto;
-      z-index: 1000;
-      padding: 10px;
+      position: absolute; top: 60px; bottom: 0; left: 0; right: 0;
+      background: white; overflow-y: auto; z-index: 1000; padding: 10px;
     }
     #cameraListAlphabetical { list-style: none; padding: 0; margin: 0; }
     #cameraListAlphabetical li {
-      margin-bottom: 20px;
+      margin-bottom: 24px;
       text-align: center;
     }
     #cameraListAlphabetical .title {
@@ -76,8 +72,9 @@
     }
     #cameraListAlphabetical .video-container {
       display: none;
-      width: 60%; max-width: 500px;
-      height: 250px;
+      width: 50%;
+      max-width: 400px;
+      aspect-ratio: 16 / 9;
       margin: 0 auto 16px;
       background: #000;
     }
@@ -93,7 +90,7 @@
       #cameraListView { top: 60px; }
       /* Video size on mobile */
       #cameraListAlphabetical .video-container {
-        width: 100%; height: 200px;
+        width: 100%; aspect-ratio: 16 / 9;
       }
     }
   </style>
@@ -123,7 +120,6 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    // Icon and map init
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -133,7 +129,6 @@
     const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
     const bounds = L.latLngBounds([]);
 
-    // Controls
     document.getElementById('zoom-in').onclick = () => map.zoomIn();
     document.getElementById('zoom-out').onclick = () => map.zoomOut();
     document.getElementById('locateBtn').onclick = () => map.locate({setView:true, maxZoom:16});
@@ -143,7 +138,6 @@
       if(map.hasLayer(tileLayer)) map.removeLayer(tileLayer); else tileLayer.addTo(map);
     };
 
-    // Video popup helper
     function createManagedPopup(url) {
       const c = document.createElement('div'); c.className='video-popup';
       const v = document.createElement('video'); v.controls=true; v.autoplay=false; v.muted=true; v.playsInline=true; c.appendChild(v);
@@ -156,17 +150,9 @@
       return c;
     }
 
-    // Marker data
     const markers = [
       { id:'OFFICE', address:'300 North 3rd Street, Burbank, CA', url:'/hls/cam1.m3u8', type:'building' },
       { id:'BBQ', lat:34.16018494, lng:-118.25466125, url:'/hls/cam2.m3u8', type:'food' },
       { id:'5STAR', address:'8230 Allott Ave, Panorama City, CA 91402', url:'/hls/cam3.m3u8', type:'laundry' },
       { id:"Trader Jo's", lat:34.15995909, lng:-118.25430965, url:'/hls/cam5.m3u8', type:'food' },
-      { id:'Master BBQ', lat:34.14666667, lng:-118.26277778, url:'/hls/cam6.m3u8', type:'food' },
-      { id:'BJ-1', lat:34.20205288, lng:-118.40886142, url:'/hls/cam8.m3u8', type:'parking' },
-      { id:'BJ-2', lat:34.20225288, lng:-118.40866142, url:'/hls/cam9.m3u8', type:'parking' },
-      { id:'Home', lat:34.20793003, lng:-118.36923044, url:'/hls/cam10.m3u8', type:'building' },
-      { id:'Meat master', lat:34.19412745, lng:-118.36468681, url:'/hls/cam11.m3u8', type:'food' }
-    ];
-    const markerRefs = [];
-    (async()=>{ for(const cam of markers){ let lat=cam.lat, lng=cam.lng; if(lat===undefined||lng===undefined){ const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`); const data=await res.json(); if(!data.length) continue; lat=
+      { id:'Master BBQ', lat
