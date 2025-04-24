@@ -12,9 +12,13 @@
     .leaflet-popup-content-wrapper { max-width: 320px; border: none; box-shadow: none; background: transparent; }
 
     .top-bar {
-      position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1100;
+      position: absolute;
+      top: 10px; left: 10px; right: 10px;
+      z-index: 1100;
       display: flex; align-items: center; gap: 6px;
-      background: white; padding: 10px; border-radius: 12px;
+      background: white;
+      padding: 10px;
+      border-radius: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     .top-bar input.search-box {
@@ -39,8 +43,10 @@
     #controls button {
       width: 40px; height: 40px; background: white;
       border-radius: 50%; border: 1px solid rgba(0,0,0,0.2);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 20px;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       transition: background-color 0.3s;
     }
     #controls button:hover { background: #f1f1f1; }
@@ -49,26 +55,34 @@
     #cameraListView {
       display: none;
       position: absolute;
-      top: 60px; bottom: 0; left: 0; right: 0;
+      top: 80px; bottom: 0; left: 0; right: 0;
       background: white;
       overflow-y: auto;
       z-index: 1000;
       padding: 10px;
     }
     #cameraListView ul { list-style: none; padding: 0; margin: 0; }
-    #cameraListView ul li {
-      padding: 8px 12px;
-      border-bottom: 1px solid #ddd;
-    }
+    #cameraListView ul li { margin-bottom: 16px; }
     #cameraListView ul li div.title {
       cursor: pointer;
       font-weight: bold;
+      margin-bottom: 4px;
     }
     #cameraListView ul li div.video-list-container {
       display: none;
-      width: 100%; height: 180px;
-      margin-top: 8px;
+      width: 100%; height: 200px;
       overflow: hidden;
+    }
+
+    /* Mobile: hide icon buttons and adjust list top */
+    @media (max-width: 768px) {
+      .top-bar button { display: none; }
+      .top-bar {
+        left: 0; right: 0; border-radius: 0;
+      }
+      #cameraListView {
+        top: 60px;
+      }
     }
   </style>
 </head>
@@ -109,6 +123,7 @@
     const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
     const bounds = L.latLngBounds([]);
 
+    // Zoom & locate controls
     document.getElementById('zoom-in').onclick = () => map.zoomIn();
     document.getElementById('zoom-out').onclick = () => map.zoomOut();
     document.getElementById('locateBtn').onclick = () => map.locate({ setView: true, maxZoom: 16 });
@@ -118,6 +133,7 @@
     });
     map.on('locationerror', () => alert('Не удалось получить геолокацию'));
 
+    // Toggle tile layer
     document.getElementById('toggleMapBtn').onclick = () => {
       if (map.hasLayer(tileLayer)) map.removeLayer(tileLayer);
       else tileLayer.addTo(map);
@@ -153,109 +169,3 @@
       { id: 'BBQ', lat: 34.1601849437365, lng: -118.25466125331505, url: '/hls/cam2.m3u8', type: 'food' },
       { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8', type: 'laundry' },
       { id: "Trader Jo's", lat: 34.15995908795789, lng: -118.25430964670682, url: '/hls/cam5.m3u8', type: 'food' },
-      { id: 'Master BBQ', lat: 34.1466666667, lng: -118.2627777778, url: '/hls/cam6.m3u8', type: 'food' },
-      { id: 'BJ-1', lat: 34.20205288034795, lng: -118.40886141624648, url: '/hls/cam8.m3u8', type: 'parking' },
-      { id: 'BJ-2', lat: 34.20225288034795, lng: -118.40866141624648, url: '/hls/cam9.m3u8', type: 'parking' },
-      { id: 'Home', lat: 34.207930027750535, lng: -118.36923043862326, url: '/hls/cam10.m3u8', type: 'building' },
-      { id: 'Meat master', lat: 34.19412745338414, lng: -118.36468680858975, url: '/hls/cam11.m3u8', type: 'food' }
-    ];
-
-    const markerRefs = [];
-    (async () => {
-      for (const cam of markers) {
-        let lat, lng;
-        if (cam.lat !== undefined && cam.lng !== undefined) { lat = cam.lat; lng = cam.lng; }
-        else {
-          const data = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`).then(r => r.json());
-          if (!data.length) continue;
-          lat = +data[0].lat; lng = +data[0].lon;
-        }
-        bounds.extend([lat, lng]);
-        const marker = L.marker([lat, lng], { icon: redIcon }).addTo(map);
-        const popup = createManagedPopup(cam.url);
-        marker.bindPopup(popup, { maxWidth: 650 }).bindTooltip(cam.id, { permanent: true, direction: 'right', offset: [10, 0] });
-        marker.on('popupopen', () => { popup.onPopupOpen(); map.setView(marker.getLatLng(), map.getZoom(), { animate: true }); });
-        marker.on('popupclose', () => popup.onPopupClose());
-        markerRefs.push({ marker, id: cam.id, cam });
-      }
-      map.fitBounds(bounds.pad(0.2));
-    })();
-
-    document.getElementById('searchBox').addEventListener('input', () => {
-      const val = document.getElementById('searchBox').value.trim().toLowerCase();
-      markerRefs.forEach(({ marker, id }) => {
-        if (id.toLowerCase().includes(val)) {
-          marker.openPopup(); map.setView(marker.getLatLng(), 18);
-        }
-      });
-    });
-
-    const toggleListBtn = document.getElementById('toggleListBtn');
-    const mapContainer = document.getElementById('map');
-    const listContainer = document.getElementById('cameraListView');
-    const listUl = document.getElementById('cameraListAlphabetical');
-    let listMode = false;
-
-    function buildAlphabeticalList() {
-      listUl.innerHTML = '';
-      const sorted = markerRefs
-        .map(mr => ({ id: mr.id, url: mr.cam.url }))
-        .sort((a, b) => a.id.localeCompare(b.id, undefined, { sensitivity: 'base'}));
-
-      sorted.forEach(({ id, url }) => {
-        const li = document.createElement('li');
-        const title = document.createElement('div');
-        title.className = 'title';
-        title.textContent = id;
-
-        const videoContainer = document.createElement('div');
-        videoContainer.className = 'video-list-container';
-        const video = document.createElement('video');
-        video.controls = true; video.autoplay = false; video.muted = true; video.playsInline = true;
-        videoContainer.appendChild(video);
-        let hlsInstance;
-
-        title.addEventListener('click', () => {
-          if (videoContainer.style.display === 'block') {
-            videoContainer.style.display = 'none';
-            if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
-            video.pause(); video.removeAttribute('src'); video.load();
-          } else {
-            videoContainer.style.display = 'block';
-            if (Hls.isSupported()) {
-              hlsInstance = new Hls();
-              hlsInstance.loadSource(url);
-              hlsInstance.attachMedia(video);
-              hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-            } else {
-              video.src = url;
-              video.onloadedmetadata = () => video.play();
-            }
-          }
-        });
-
-        li.appendChild(title);
-        li.appendChild(videoContainer);
-        listUl.appendChild(li);
-      });
-    }
-
-    function toggleView() {
-      listMode = !listMode;
-      if (listMode) {
-        mapContainer.style.display = 'none';
-        listContainer.style.display = 'block';
-        buildAlphabeticalList();
-        toggleListBtn.classList.add('active');
-      } else {
-        listContainer.style.display = 'none';
-        mapContainer.style.display = 'block';
-        toggleListBtn.classList.remove('active');
-        map.invalidateSize();
-      }
-    }
-
-    toggleListBtn.addEventListener('click', toggleView);
-  </script>
-</body>
-</html>
