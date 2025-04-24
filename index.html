@@ -9,9 +9,9 @@
     html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
     #map { height: 100%; width: 100%; }
     .top-bar {
-      position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1100;
+      position: absolute; top: 10px; left: 0; right: 0; z-index: 1100;
       display: flex; align-items: center; gap: 6px;
-      background: white; padding: 10px; border-radius: 12px;
+      background: white; padding: 10px; border-radius: 0 0 12px 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     .top-bar input { flex: 1; padding: 8px 12px; font-size: 14px; border-radius: 20px; border: 1px solid #ccc; }
@@ -26,38 +26,15 @@
     #cameraListAlphabetical { list-style: none; padding: 0; margin: 0; }
     #cameraListAlphabetical li { text-align: center; margin-bottom: 24px; }
     #cameraListAlphabetical .title { font-weight: bold; cursor: pointer; margin-bottom: 8px; font-size: 16px; }
-    #cameraListAlphabetical .video-container { display: none; width: 50%; max-width: 400px; aspect-ratio: 16 / 9; margin: 0 auto 16px; background: #000; }
+    #cameraListAlphabetical .video-container { display: none; width: 50%; max-width: 400px; aspect-ratio: 16/9; margin: 0 auto 16px; background: #000; }
     #cameraListAlphabetical video { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Mobile adjustments */
     @media (max-width: 600px) {
-      /* Hide filter icons and map toggle on small screens */
-      .filter-btn,
-      #toggleMapBtn {
-        display: none;
-      }
-      /* Ensure list toggle always visible */
-      #toggleListBtn {
-        display: inline-block;
-      }
-      .top-bar {
-        left: 0;
-        right: 0;
-        border-radius: 0;
-      }
-      /* Position list below top-bar */
-      #cameraListView {
-        top: 60px;
-      }
-      /* Full-width video on mobile */
-      #cameraListAlphabetical .video-container {
-        width: 100%;
-        aspect-ratio: 16 / 9;
-      }
-    }
-      .top-bar { left: 0; right: 0; border-radius: 0; }
+      .filter-btn, #toggleMapBtn { display: none; }
+      #toggleListBtn { display: inline-block; }
+      .top-bar { border-radius: 0; }
       #cameraListView { top: 60px; }
-      #cameraListAlphabetical .video-container { width: 100%; aspect-ratio: 16 / 9; }
+      #cameraListAlphabetical .video-container { width: 100%; }
     }
   </style>
 </head>
@@ -70,7 +47,7 @@
     <button class="filter-btn" data-type="laundry">🧺</button>
     <button class="filter-btn" data-type="building">🏢</button>
     <button class="filter-btn" data-type="ev">🔌</button>
-    <button id="toggleMapBtn">🗺️</button>
+    <button id="toggleMapBtn" class="active">🗺️</button>
     <button id="toggleListBtn">📋</button>
   </div>
   <div id="map"></div>
@@ -83,90 +60,99 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    // Data
-    const markers = [
-      { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8' },
-      { id: 'BBQ', lat: 34.160185, lng: -118.254661, url: '/hls/cam2.m3u8' },
-      { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8' },
-      { id: "Trader Jo's", lat: 34.159959, lng: -118.254310, url: '/hls/cam5.m3u8' },
-      { id: 'Master BBQ', lat: 34.146667, lng: -118.262778, url: '/hls/cam6.m3u8' },
-      { id: 'BJ-1', lat: 34.202053, lng: -118.408861, url: '/hls/cam8.m3u8' },
-      { id: 'BJ-2', lat: 34.202253, lng: -118.408661, url: '/hls/cam9.m3u8' },
-      { id: 'Home', lat: 34.207930, lng: -118.369230, url: '/hls/cam10.m3u8' },
-      { id: 'Meat master', lat: 34.194127, lng: -118.364687, url: '/hls/cam11.m3u8' }
+    // Helper for map popups
+    function createManagedPopup(url) {
+      const container = document.createElement('div'); container.style.width='320px'; container.style.height='180px';
+      const video = document.createElement('video'); video.controls=true; video.muted=true; video.autoplay=false; video.style.width='100%'; video.style.height='100%';
+      container.appendChild(video);
+      let hls;
+      container.onPopupOpen = () => {
+        if (Hls.isSupported()) { hls = new Hls(); hls.loadSource(url); hls.attachMedia(video); hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play()); }
+        else { video.src=url; video.onloadedmetadata=()=>video.play(); }
+      };
+      container.onPopupClose = () => { if(hls){ hls.destroy(); } video.pause(); video.src=''; };
+      return container;
+    }
+
+    const cameras = [
+      { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8', type: 'building' },
+      { id: 'BBQ', lat: 34.160185, lng: -118.254661, url: '/hls/cam2.m3u8', type: 'food' },
+      { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8', type: 'laundry' },
+      { id: "Trader Jo's", lat: 34.159959, lng: -118.254310, url: '/hls/cam5.m3u8', type: 'food' },
+      { id: 'Master BBQ', lat: 34.146667, lng: -118.262778, url: '/hls/cam6.m3u8', type: 'food' },
+      { id: 'BJ-1', lat: 34.202053, lng: -118.408861, url: '/hls/cam8.m3u8', type: 'parking' },
+      { id: 'BJ-2', lat: 34.202253, lng: -118.408661, url: '/hls/cam9.m3u8', type: 'parking' },
+      { id: 'Home', lat: 34.207930, lng: -118.369230, url: '/hls/cam10.m3u8', type: 'building' },
+      { id: 'Meat master', lat: 34.194127, lng: -118.364687, url: '/hls/cam11.m3u8', type: 'food' }
     ];
-    // Map init
+
+    // Initialize map
     const map = L.map('map', { zoomControl: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19, attribution:'&copy; OSM'}).addTo(map);
     const bounds = L.latLngBounds([]);
-    const redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png', iconSize: [25,41], iconAnchor: [12,41], popupAnchor: [1,-34], shadowSize: [41,41] });
-    const markerRefs = [];
+    const redIcon = new L.Icon({ iconUrl:'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png', iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41] });
+
+    // Store refs
+    const refs = [];
     (async()=>{
-      for(const cam of markers){
+      for(const cam of cameras){
         let lat=cam.lat, lng=cam.lng;
-        if(lat==null||lng==null){
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`);
-          const data = await res.json(); if(!data.length) continue;
-          lat=+data[0].lat; lng=+data[0].lon;
-        }
-        const marker = L.marker([lat,lng],{icon:redIcon}).addTo(map).bindTooltip(cam.id,{permanent:true,direction:'right'});
+        if(lat==null||lng==null){ const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`); const data=await res.json(); if(data.length){ lat=+data[0].lat; lng=+data[0].lon; }}
         bounds.extend([lat,lng]);
-        markerRefs.push({id:cam.id,url:cam.url});
+        const marker = L.marker([lat,lng],{icon:redIcon}).addTo(map).bindTooltip(cam.id,{permanent:true,direction:'right'});
+        const popup = createManagedPopup(cam.url);
+        marker.bindPopup(popup);
+        marker.on('popupopen',()=>popup.onPopupOpen());
+        marker.on('popupclose',()=>popup.onPopupClose());
+        refs.push(cam);
       }
       map.fitBounds(bounds.pad(0.2));
     })();
+
     // Controls
     document.getElementById('zoom-in').onclick = ()=>map.zoomIn();
     document.getElementById('zoom-out').onclick = ()=>map.zoomOut();
     document.getElementById('locateBtn').onclick = ()=>map.locate({setView:true,maxZoom:16});
-    map.on('locationfound', e=>{L.marker(e.latlng,{icon:redIcon}).addTo(map).bindTooltip('Вы здесь').openTooltip(); map.setView(e.latlng,16);});
-    map.on('locationerror', ()=>{});
-    document.getElementById('toggleMapBtn').onclick = ()=>{ document.getElementById('map').style.display='block'; document.getElementById('cameraListView').style.display='none'; document.getElementById('toggleMapBtn').classList.add('active'); document.getElementById('toggleListBtn').classList.remove('active'); map.invalidateSize(); };
-    document.getElementById('toggleListBtn').onclick = ()=>{ buildList(); document.getElementById('map').style.display='none'; document.getElementById('cameraListView').style.display='block'; document.getElementById('toggleListBtn').classList.add('active'); document.getElementById('toggleMapBtn').classList.remove('active'); };
-    // Build list
+    map.on('locationfound',e=>{L.marker(e.latlng,{icon:redIcon}).addTo(map).bindTooltip('Вы здесь').openTooltip(); map.setView(e.latlng,16);});
+    map.on('locationerror',()=>{});
+    document.getElementById('toggleMapBtn').onclick = ()=>{
+      document.getElementById('map').style.display='block';
+      document.getElementById('cameraListView').style.display='none';
+      document.getElementById('toggleMapBtn').classList.add('active');
+      document.getElementById('toggleListBtn').classList.remove('active');
+      map.invalidateSize();
+    };
+    document.getElementById('toggleListBtn').onclick = ()=>{
+      buildList();
+      document.getElementById('map').style.display='none';
+      document.getElementById('cameraListView').style.display='block';
+      document.getElementById('toggleListBtn').classList.add('active');
+      document.getElementById('toggleMapBtn').classList.remove('active');
+    };
+
+    // Build list with titles and streaming
     function buildList(){
-      const ul = document.getElementById('cameraListAlphabetical'); ul.innerHTML='';
-      [...markerRefs].sort((a,b)=>a.id.localeCompare(b.id,{sensitivity:'base'})).forEach(cam=>{
+      const ul = document.getElementById('cameraListAlphabetical'); ul.innerHTML = '';
+      refs.sort((a,b)=>a.id.localeCompare(b.id,{sensitivity:'base'})).forEach(cam=>{
         const li = document.createElement('li');
-        const title = document.createElement('div'); title.textContent = cam.id; title.className='title';
-        const vc = document.createElement('div'); vc.className='video-container';
-        const video = document.createElement('video'); video.controls=true; video.playsInline=true; vc.appendChild(video);
-        title.addEventListener('click', () => {
-          const open = vc.style.display === 'block';
-          if (open) {
-            vc.style.display = 'none';
-            // stop and destroy HLS instance
-            if (video._hls) {
-              video._hls.destroy();
-              delete video._hls;
-            }
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
-          } else {
-            vc.style.display = 'block';
-            if (Hls.isSupported()) {
-              const hls = new Hls({
-                lowLatencyMode: true,
-                liveSyncDurationCount: 3,
-                maxBufferLength: 30,
-                maxMaxBufferLength: 60
-              });
-              hls.loadSource(cam.url);
-              hls.attachMedia(video);
-              hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-              video._hls = hls;
-            } else {
-              video.src = cam.url;
-              video.onloadedmetadata = () => video.play();
-            }
+        const title = document.createElement('div'); title.textContent = cam.id; title.className = 'title';
+        const vc = document.createElement('div'); vc.className = 'video-container';
+        const video = document.createElement('video'); video.controls = true; video.playsInline = true; video.style.width='100%'; video.style.height='100%'; vc.appendChild(video);
+        title.onclick = ()=>{
+          const shown = vc.style.display==='block';
+          if(shown){ vc.style.display='none'; if(video._hls){ video._hls.destroy(); } video.pause(); video.src=''; }
+          else {
+            vc.style.display='block';
+            if(Hls.isSupported()){ const hls=new Hls({ lowLatencyMode:true, liveSyncDurationCount:3 }); hls.loadSource(cam.url); hls.attachMedia(video); hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play()); video._hls = hls; }
+            else { video.src=cam.url; video.onloadedmetadata=()=>video.play(); }
           }
-        });
+        };
         li.appendChild(title); li.appendChild(vc); ul.appendChild(li);
       });
     }
-    // Search
-    document.getElementById('searchBox').addEventListener('input', e=>{
+
+    // Search filter
+    document.getElementById('searchBox').addEventListener('input',e=>{
       const q = e.target.value.trim().toLowerCase();
       document.querySelectorAll('#cameraListAlphabetical .title').forEach(t=>{
         t.parentElement.style.display = t.textContent.toLowerCase().includes(q)?'block':'none';
