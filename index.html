@@ -8,96 +8,39 @@
   <style>
     html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
     #map { height: 100%; width: 100%; }
-
     .top-bar {
-      position: absolute;
-      top: 10px; left: 10px; right: 10px;
-      z-index: 1100;
+      position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1100;
       display: flex; align-items: center; gap: 6px;
-      background: white;
-      padding: 10px;
-      border-radius: 12px;
+      background: white; padding: 10px; border-radius: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
-    .top-bar input {
-      flex: 1;
-      padding: 8px 12px;
-      font-size: 14px;
-      border-radius: 20px; border: 1px solid #ccc;
-    }
-    .top-bar button {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 16px;
-      background: #eee;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .top-bar .active { background: #ddd; }
-
-    #controls {
-      position: absolute;
-      bottom: 20px; right: 20px;
-      z-index: 1000;
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    #controls button {
-      width: 40px; height: 40px;
-      background: white;
-      border-radius: 50%; border: 1px solid rgba(0,0,0,0.2);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      font-size: 20px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background-color 0.3s;
-    }
+    .top-bar input { flex: 1; padding: 8px 12px; font-size: 14px; border-radius: 20px; border: 1px solid #ccc; }
+    .top-bar button { padding: 6px 12px; border: none; border-radius: 16px; background: #eee; cursor: pointer; font-size: 14px; }
+    .top-bar button.active { background: #ddd; }
+    #controls { position: absolute; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+    #controls button { width: 40px; height: 40px; background: white; border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color 0.3s; }
     #controls button:hover { background: #f1f1f1; }
 
     /* List View */
-    #cameraListView {
-      display: none;
-      position: absolute; top: 60px; bottom: 0; left: 0; right: 0;
-      background: white; overflow-y: auto; z-index: 1000; padding: 10px;
-    }
+    #cameraListView { display: none; position: absolute; top: 60px; bottom: 0; left: 0; right: 0; background: white; overflow-y: auto; z-index: 1000; padding: 10px; }
     #cameraListAlphabetical { list-style: none; padding: 0; margin: 0; }
-    #cameraListAlphabetical li {
-      margin-bottom: 24px;
-      text-align: center;
-    }
-    #cameraListAlphabetical .title {
-      font-weight: bold;
-      cursor: pointer;
-      margin-bottom: 8px;
-      font-size: 16px;
-    }
-    #cameraListAlphabetical .video-container {
-      display: none;
-      width: 50%;
-      max-width: 400px;
-      aspect-ratio: 16 / 9;
-      margin: 0 auto 16px;
-      background: #000;
-    }
-    #cameraListAlphabetical video {
-      width: 100%; height: 100%; object-fit: cover;
-    }
+    #cameraListAlphabetical li { text-align: center; margin-bottom: 24px; }
+    #cameraListAlphabetical .title { font-weight: bold; cursor: pointer; margin-bottom: 8px; font-size: 16px; }
+    #cameraListAlphabetical .video-container { display: none; width: 50%; max-width: 400px; aspect-ratio: 16 / 9; margin: 0 auto 16px; background: #000; }
+    #cameraListAlphabetical video { width: 100%; height: 100%; object-fit: cover; }
 
     /* Mobile adjustments */
     @media (max-width: 768px) {
       .filter-btn, #toggleMapBtn { display: none; }
-      #toggleListBtn { display: inline-block; }
       .top-bar { left: 0; right: 0; border-radius: 0; }
       #cameraListView { top: 60px; }
-      /* Video size on mobile */
-      #cameraListAlphabetical .video-container {
-        width: 100%; aspect-ratio: 16 / 9;
-      }
+      #cameraListAlphabetical .video-container { width: 100%; aspect-ratio: 16 / 9; }
     }
   </style>
 </head>
 <body>
   <div class="top-bar">
-    <input type="text" id="searchBox" placeholder="Поиск камеры" />
+    <input id="searchBox" placeholder="Поиск камеры" />
     <button class="filter-btn" data-type="food">🍔</button>
     <button class="filter-btn" data-type="parking">Ⓜ️</button>
     <button class="filter-btn" data-type="gas">⛽</button>
@@ -107,52 +50,79 @@
     <button id="toggleMapBtn">🗺️</button>
     <button id="toggleListBtn">📋</button>
   </div>
-
   <div id="map"></div>
   <div id="cameraListView"><ul id="cameraListAlphabetical"></ul></div>
-
   <div id="controls">
     <button id="zoom-in">+</button>
     <button id="zoom-out">−</button>
     <button id="locateBtn">🎯</button>
   </div>
-
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    const redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-    });
-    const map = L.map('map', { zoomControl: false });
-    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-    const bounds = L.latLngBounds([]);
-
-    document.getElementById('zoom-in').onclick = () => map.zoomIn();
-    document.getElementById('zoom-out').onclick = () => map.zoomOut();
-    document.getElementById('locateBtn').onclick = () => map.locate({setView:true, maxZoom:16});
-    map.on('locationfound', e => { L.marker(e.latlng,{icon:redIcon}).addTo(map).bindTooltip('Вы здесь').openTooltip(); map.setView(e.latlng,16); });
-    map.on('locationerror', () => alert('Не удалось получить геолокацию'));
-    document.getElementById('toggleMapBtn').onclick = () => {
-      if(map.hasLayer(tileLayer)) map.removeLayer(tileLayer); else tileLayer.addTo(map);
-    };
-
-    function createManagedPopup(url) {
-      const c = document.createElement('div'); c.className='video-popup';
-      const v = document.createElement('video'); v.controls=true; v.autoplay=false; v.muted=true; v.playsInline=true; c.appendChild(v);
-      let hlsInst;
-      c.onPopupOpen = () => {
-        if(Hls.isSupported()) { hlsInst=new Hls(); hlsInst.loadSource(url); hlsInst.attachMedia(v); hlsInst.on(Hls.Events.MANIFEST_PARSED,()=>v.play()); }
-        else { v.src=url; v.onloadedmetadata=()=>v.play(); }
-      };
-      c.onPopupClose = () => { if(hlsInst){hlsInst.destroy();} v.pause(); v.removeAttribute('src'); v.load(); };
-      return c;
-    }
-
+    // Data
     const markers = [
-      { id:'OFFICE', address:'300 North 3rd Street, Burbank, CA', url:'/hls/cam1.m3u8', type:'building' },
-      { id:'BBQ', lat:34.16018494, lng:-118.25466125, url:'/hls/cam2.m3u8', type:'food' },
-      { id:'5STAR', address:'8230 Allott Ave, Panorama City, CA 91402', url:'/hls/cam3.m3u8', type:'laundry' },
-      { id:"Trader Jo's", lat:34.15995909, lng:-118.25430965, url:'/hls/cam5.m3u8', type:'food' },
-      { id:'Master BBQ', lat
+      { id: 'OFFICE', address: '300 North 3rd Street, Burbank, CA', url: '/hls/cam1.m3u8' },
+      { id: 'BBQ', lat: 34.160185, lng: -118.254661, url: '/hls/cam2.m3u8' },
+      { id: '5STAR', address: '8230 Allott Ave, Panorama City, CA 91402', url: '/hls/cam3.m3u8' },
+      { id: "Trader Jo's", lat: 34.159959, lng: -118.254310, url: '/hls/cam5.m3u8' },
+      { id: 'Master BBQ', lat: 34.146667, lng: -118.262778, url: '/hls/cam6.m3u8' },
+      { id: 'BJ-1', lat: 34.202053, lng: -118.408861, url: '/hls/cam8.m3u8' },
+      { id: 'BJ-2', lat: 34.202253, lng: -118.408661, url: '/hls/cam9.m3u8' },
+      { id: 'Home', lat: 34.207930, lng: -118.369230, url: '/hls/cam10.m3u8' },
+      { id: 'Meat master', lat: 34.194127, lng: -118.364687, url: '/hls/cam11.m3u8' }
+    ];
+    // Map init
+    const map = L.map('map', { zoomControl: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    const bounds = L.latLngBounds([]);
+    const redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png', iconSize: [25,41], iconAnchor: [12,41], popupAnchor: [1,-34], shadowSize: [41,41] });
+    const markerRefs = [];
+    (async()=>{
+      for(const cam of markers){
+        let lat=cam.lat, lng=cam.lng;
+        if(lat==null||lng==null){
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`);
+          const data = await res.json(); if(!data.length) continue;
+          lat=+data[0].lat; lng=+data[0].lon;
+        }
+        const marker = L.marker([lat,lng],{icon:redIcon}).addTo(map).bindTooltip(cam.id,{permanent:true,direction:'right'});
+        bounds.extend([lat,lng]);
+        markerRefs.push({id:cam.id,url:cam.url});
+      }
+      map.fitBounds(bounds.pad(0.2));
+    })();
+    // Controls
+    document.getElementById('zoom-in').onclick = ()=>map.zoomIn();
+    document.getElementById('zoom-out').onclick = ()=>map.zoomOut();
+    document.getElementById('locateBtn').onclick = ()=>map.locate({setView:true,maxZoom:16});
+    map.on('locationfound', e=>{L.marker(e.latlng,{icon:redIcon}).addTo(map).bindTooltip('Вы здесь').openTooltip(); map.setView(e.latlng,16);});
+    map.on('locationerror', ()=>{});
+    document.getElementById('toggleMapBtn').onclick = ()=>{ document.getElementById('map').style.display='block'; document.getElementById('cameraListView').style.display='none'; document.getElementById('toggleMapBtn').classList.add('active'); document.getElementById('toggleListBtn').classList.remove('active'); map.invalidateSize(); };
+    document.getElementById('toggleListBtn').onclick = ()=>{ buildList(); document.getElementById('map').style.display='none'; document.getElementById('cameraListView').style.display='block'; document.getElementById('toggleListBtn').classList.add('active'); document.getElementById('toggleMapBtn').classList.remove('active'); };
+    // Build list
+    function buildList(){
+      const ul = document.getElementById('cameraListAlphabetical'); ul.innerHTML='';
+      [...markerRefs].sort((a,b)=>a.id.localeCompare(b.id,{sensitivity:'base'})).forEach(cam=>{
+        const li = document.createElement('li');
+        const title = document.createElement('div'); title.textContent = cam.id; title.className='title';
+        const vc = document.createElement('div'); vc.className='video-container';
+        const video = document.createElement('video'); video.controls=true; video.playsInline=true; vc.appendChild(video);
+        title.addEventListener('click', ()=>{
+          const open = vc.style.display==='block';
+          if(open){ vc.style.display='none'; video.pause(); video.removeAttribute('src'); }
+          else{ if(Hls.isSupported()){ const hls=new Hls(); hls.loadSource(cam.url); hls.attachMedia(video); hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play()); } else { video.src=cam.url; video.onloadedmetadata=()=>video.play(); } vc.style.display='block'; }
+        });
+        li.appendChild(title); li.appendChild(vc); ul.appendChild(li);
+      });
+    }
+    // Search
+    document.getElementById('searchBox').addEventListener('input', e=>{
+      const q = e.target.value.trim().toLowerCase();
+      document.querySelectorAll('#cameraListAlphabetical .title').forEach(t=>{
+        t.parentElement.style.display = t.textContent.toLowerCase().includes(q)?'block':'none';
+      });
+    });
+  </script>
+</body>
+</html>
