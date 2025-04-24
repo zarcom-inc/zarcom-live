@@ -108,10 +108,31 @@
         const title = document.createElement('div'); title.textContent = cam.id; title.className='title';
         const vc = document.createElement('div'); vc.className='video-container';
         const video = document.createElement('video'); video.controls=true; video.playsInline=true; vc.appendChild(video);
-        title.addEventListener('click', ()=>{
-          const open = vc.style.display==='block';
-          if(open){ vc.style.display='none'; video.pause(); video.removeAttribute('src'); }
-          else{ if(Hls.isSupported()){ const hls=new Hls(); hls.loadSource(cam.url); hls.attachMedia(video); hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play()); } else { video.src=cam.url; video.onloadedmetadata=()=>video.play(); } vc.style.display='block'; }
+        title.addEventListener('click', () => {
+          const open = vc.style.display === 'block';
+          if (open) {
+            vc.style.display = 'none';
+            // stop and destroy HLS instance
+            if (video._hls) {
+              video._hls.destroy();
+              delete video._hls;
+            }
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+          } else {
+            vc.style.display = 'block';
+            if (Hls.isSupported()) {
+              const hls = new Hls();
+              hls.loadSource(cam.url);
+              hls.attachMedia(video);
+              hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+              video._hls = hls;
+            } else {
+              video.src = cam.url;
+              video.onloadedmetadata = () => video.play();
+            }
+          }
         });
         li.appendChild(title); li.appendChild(vc); ul.appendChild(li);
       });
