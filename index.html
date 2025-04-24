@@ -3,71 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Zarcom Cameras Map</title>
+  <title>Zarcom Cameras Map with Archive</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
     #map { height: 100%; width: 100%; }
 
-    /* Popup video styling */
-    .video-popup { margin: 0; padding: 0; }
-    .video-popup video {
-      width: 320px !important;
-      height: 180px !important;
-      display: block;
-      object-fit: cover;
-    }
-    /* Make leaflet popup background transparent and remove padding */
-    .leaflet-popup-content-wrapper,
-    .leaflet-popup-tip {
-      background: transparent;
-      box-shadow: none;
-    }
-    .leaflet-popup-content {
-      margin: 0;
-      padding: 0;
-    }
+    /* Popup archive styling */
+    .video-popup { width: 320px; }
+    .video-popup video { width: 100%; height: 180px; object-fit: cover; }
+    .popup-controls { display: flex; justify-content: space-between; margin: 4px 0; }
+    .popup-controls button, .popup-controls select { flex: 1; margin-right: 4px; padding: 4px; font-size: 12px; }
+    .popup-controls select { margin-right: 0; }
 
-    .top-bar {
-      position: absolute; top: 10px; left: 10px; z-index: 1100;
-      display: flex; gap: 8px;
-    }
-    .top-bar button {
-      padding: 8px; border: none; border-radius: 4px;
-      background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-      cursor: pointer; font-size: 18px;
-    }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: transparent; box-shadow: none; }
+    .leaflet-popup-content { margin: 0; padding: 0; }
+
+    .top-bar { position: absolute; top: 10px; left: 10px; z-index: 1100; display: flex; gap: 8px; }
+    .top-bar button { padding: 8px; border: none; border-radius: 4px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer; font-size: 18px; }
     .top-bar button.active { background: #ddd; }
 
-    #cameraListView {
-      display: none;
-      position: absolute; top: 50px; left: 0; right: 0; bottom: 0;
-      background: #f9f9f9; overflow-y: auto; z-index: 1000;
-      padding: 10px;
-    }
+    #cameraListView { display: none; position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 600px; height: calc(100% - 60px); background: #f9f9f9; overflow-y: auto; z-index: 1000; padding: 10px; }
     #cameraListView ul { list-style: none; margin: 0; padding: 0; }
-    #cameraListView li {
-      margin-bottom: 16px; padding: 8px;
-      background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
+    #cameraListView li { margin-bottom: 16px; padding: 8px; background: #fff; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .cam-title { font-weight: bold; cursor: pointer; margin-bottom: 6px; }
-    .cam-video {
-      display: none; position: relative;
-      width: 100%; max-width: 640px;
-      padding-top: 56.25%; /* 16:9 */
-      margin: 0 auto;
-      background: #000;
-    }
-    .cam-video video {
-      position: absolute; top: 0; left: 0;
-      width: 100%; height: 100%; object-fit: cover;
-    }
-
-    /* Center list and unify video resolution */
-    #cameraListView {
-      top: 60px; width: 80%; max-width: 600px;
-      left: 50%; transform: translateX(-50%);
-    }
+    .cam-video { display: none; position: relative; width: 100%; padding-top: 56.25%; background: #000; }
+    .cam-video video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
   </style>
 </head>
 <body>
@@ -81,7 +42,70 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    // Initialize map and icon
+    // Utility to get last N dates as strings YYYY-MM-DD
+    function getLastDates(days) {
+      const dates = [];
+      for (let i = 0; i < days; i++) {
+        const d = new Date(); d.setUTCDate(d.getUTCDate() - i);
+        dates.push(d.toISOString().slice(0,10));
+      }
+      return dates;
+    }
+
+    // Attach HLS source to video element
+    function attachHls(videoEl, src) {
+      if (videoEl._hls) { videoEl._hls.destroy(); delete videoEl._hls; }
+      if (Hls.isSupported()) {
+        const hls = new Hls(); hls.loadSource(src); hls.attachMedia(videoEl);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play());
+        videoEl._hls = hls;
+      } else {
+        videoEl.src = src;
+        videoEl.onloadedmetadata = () => videoEl.play();
+      }
+    }
+
+    // Create popup with Live/Archive controls
+    function createVideoPopup(cam) {
+      const container = document.createElement('div'); container.className = 'video-popup';
+      const controls = document.createElement('div'); controls.className = 'popup-controls';
+      const btnLive = document.createElement('button'); btnLive.textContent = 'Live';
+      const btnArchive = document.createElement('button'); btnArchive.textContent = 'Archive';
+      const sel = document.createElement('select'); sel.style.display = 'none';
+
+      controls.append(btnLive, btnArchive, sel);
+      const video = document.createElement('video'); video.controls=true; video.muted=true;
+      container.append(controls, video);
+
+      // Populate archive dates
+      const dates = getLastDates(3);
+      dates.forEach(d => sel.append(new Option(d, d)));
+
+      // Handlers
+      btnLive.onclick = () => {
+        sel.style.display = 'none';
+        attachHls(video, cam.urlLive);
+      };
+      btnArchive.onclick = () => {
+        sel.style.display = 'block';
+        attachHls(video, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
+      };
+      sel.onchange = () => btnArchive.onclick();
+
+      // Load live by default
+      btnLive.onclick();
+      return container;
+    }
+
+    // Camera config including live and archive base URLs
+    const cameras = [
+      // Example entries; update IDs and coordinates/config as needed
+      { id: 'cam1', lat: 34.1372, lng: -118.3550, urlLive: '/hls/cam1.m3u8', urlArchiveBase: '/hls/archive/cam1' },
+      { id: 'cam2', lat: 34.1602, lng: -118.2547, urlLive: '/hls/cam2.m3u8', urlArchiveBase: '/hls/archive/cam2' },
+      // ... add up to 10 cameras
+    ];
+
+    // Initialize map
     const map = L.map('map', { zoomControl: true });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     const redIcon = new L.Icon({
@@ -90,86 +114,47 @@
       iconSize: [25,41], iconAnchor: [12,41], popupAnchor: [1,-34], shadowSize: [41,41]
     });
 
-    // Helper to create map popup
-    function createVideoPopup(url) {
-      const container = document.createElement('div');
-      container.className = 'video-popup';
-      const video = document.createElement('video');
-      video.controls = true; video.autoplay = false; video.muted = true;
-      video.style.width = '100%'; video.style.height = '100%';
-      if (Hls.isSupported()) {
-        const hls = new Hls(); hls.loadSource(url); hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        video._hls = hls;
-      } else {
-        video.src = url;
-      }
-      container.appendChild(video);
-      return container;
-    }
-
-    // Camera data
-    const cameras = [
-      { id: 'OFFICE', lat: 34.1372, lng: -118.3550, url: '/hls/cam1.m3u8' },
-      { id: 'BBQ', lat: 34.1602, lng: -118.2547, url: '/hls/cam2.m3u8' },
-      { id: '5STAR', lat: 34.1212, lng: -118.4089, url: '/hls/cam3.m3u8' },
-      { id: "Trader Jo's", lat: 34.15996, lng: -118.25431, url: '/hls/cam5.m3u8' },
-      { id: 'Master BBQ', lat: 34.14667, lng: -118.26278, url: '/hls/cam6.m3u8' },
-      { id: 'BJ-1', lat: 34.20205, lng: -118.40886, url: '/hls/cam8.m3u8' },
-      { id: 'BJ-2', lat: 34.20225, lng: -118.40866, url: '/hls/cam9.m3u8' },
-      { id: 'Home', lat: 34.20793, lng: -118.36923, url: '/hls/cam10.m3u8' },
-      { id: 'Meat Master', lat: 34.19413, lng: -118.36469, url: '/hls/cam11.m3u8' }
-    ];
-
-    // Add markers to map
+    // Add markers
     const bounds = [];
     cameras.forEach(cam => {
       const marker = L.marker([cam.lat, cam.lng], { icon: redIcon }).addTo(map)
         .bindTooltip(cam.id, { permanent: true, direction: 'right' })
-        .bindPopup(createVideoPopup(cam.url));
+        .bindPopup(createVideoPopup(cam));
       bounds.push([cam.lat, cam.lng]);
     });
     map.fitBounds(bounds);
 
-    // Build list view
+    // List view
     function buildList() {
       const ul = document.getElementById('cameraList'); ul.innerHTML = '';
-      cameras.sort((a,b)=>a.id.localeCompare(b.id)).forEach(cam=>{
+      cameras.forEach(cam => {
         const li = document.createElement('li');
         const title = document.createElement('div'); title.className = 'cam-title'; title.textContent = cam.id;
-        const videoBox = document.createElement('div'); videoBox.className = 'cam-video';
-        const video = document.createElement('video'); video.controls=true; video.muted=true;
-        videoBox.appendChild(video);
+        const box = document.createElement('div'); box.className = 'cam-video';
+        const vid = document.createElement('video'); vid.controls=true; vid.muted=true;
+        box.append(vid);
         title.onclick = () => {
-          const shown = videoBox.style.display==='block';
-          if(shown){
-            if(video._hls){ video._hls.destroy(); delete video._hls; }
-            video.pause(); videoBox.style.display='none';
-          } else {
-            if(Hls.isSupported()){ const hls=new Hls(); hls.loadSource(cam.url); hls.attachMedia(video);
-              hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play()); video._hls=hls;
-            } else { video.src=cam.url; video.onloadedmetadata=()=>video.play(); }
-            videoBox.style.display='block';
-          }
+          if (box.style.display==='block') { box.style.display='none'; vid.pause(); if(vid._hls){ vid._hls.destroy(); delete vid._hls; } }
+          else { box.style.display='block'; attachHls(vid, cam.urlLive); }
         };
-        li.appendChild(title); li.appendChild(videoBox); ul.appendChild(li);
+        li.append(title, box); ul.append(li);
       });
     }
 
-    // Toggle buttons
-    const mapBtn = document.getElementById('toggleMapBtn');
-    const listBtn = document.getElementById('toggleListBtn');
-    mapBtn.onclick = () => {
+    // Toggle map/list
+    document.getElementById('toggleMapBtn').onclick = () => {
       document.getElementById('map').style.display='block';
       document.getElementById('cameraListView').style.display='none';
-      mapBtn.classList.add('active'); listBtn.classList.remove('active');
+      document.getElementById('toggleMapBtn').classList.add('active');
+      document.getElementById('toggleListBtn').classList.remove('active');
       map.invalidateSize();
     };
-    listBtn.onclick = () => {
+    document.getElementById('toggleListBtn').onclick = () => {
       buildList();
       document.getElementById('map').style.display='none';
       document.getElementById('cameraListView').style.display='block';
-      listBtn.classList.add('active'); mapBtn.classList.remove('active');
+      document.getElementById('toggleListBtn').classList.add('active');
+      document.getElementById('toggleMapBtn').classList.remove('active');
     };
   </script>
 </body>
