@@ -53,10 +53,24 @@
       display: none; width: 100%; height: 200px; overflow: hidden;
     }
 
+    /* Mobile adjustments */
     @media (max-width: 768px) {
-      .top-bar button:nth-child(n+2) { display: none; }
-      .top-bar { left: 0; right: 0; border-radius: 0; }
-      #cameraListView { top: 50px; }
+      /* Hide filter and map toggle on mobile */
+      .filter-btn,
+      #toggleMapBtn {
+        display: none;
+      }
+      /* Keep list toggle visible */
+      #toggleListBtn {
+        display: inline-block;
+      }
+      .top-bar {
+        left: 0; right: 0; border-radius: 0;
+      }
+      /* Position list below top-bar */
+      #cameraListView {
+        top: 60px;
+      }
     }
   </style>
 </head>
@@ -114,7 +128,7 @@
         if(Hls.isSupported()) { hlsInst=new Hls(); hlsInst.loadSource(url); hlsInst.attachMedia(v); hlsInst.on(Hls.Events.MANIFEST_PARSED,()=>v.play()); }
         else { v.src=url; v.onloadedmetadata=()=>v.play(); }
       };
-      c.onPopupClose = () => { if(hlsInst){hlsInst.destroy(); hlsInst=null;} v.pause(); v.removeAttribute('src'); v.load(); };
+      c.onPopupClose = () => { if(hlsInst){hlsInst.destroy();} v.pause(); v.removeAttribute('src'); v.load(); };
       return c;
     }
 
@@ -131,7 +145,7 @@
       { id:'Meat master', lat:34.19412745, lng:-118.36468681, url:'/hls/cam11.m3u8', type:'food' }
     ];
 
-    const markerRefs = [];
+    const markerRefs=[];
     (async()=>{
       for(const cam of markers){
         let lat=cam.lat, lng=cam.lng;
@@ -151,10 +165,10 @@
       map.fitBounds(bounds.pad(0.2));
     })();
 
-    // Search filter (optional)
+    // Search box
     document.getElementById('searchBox').addEventListener('input',()=>{
       const q=event.target.value.trim().toLowerCase();
-      markerRefs.forEach(({marker,id})=>{ if(id.toLowerCase().includes(q)){ marker.openPopup(); map.setView(marker.getLatLng(),18); }});
+      markerRefs.forEach(({marker,id})=>{if(id.toLowerCase().includes(q)){marker.openPopup();map.setView(marker.getLatLng(),18);}});
     });
 
     // List view logic
@@ -171,8 +185,9 @@
         const li=document.createElement('li');
         const title=document.createElement('div'); title.textContent=id; title.className='title';
         const vidCont=document.createElement('div'); vidCont.className='video-list-container';
-        const video=document.createElement('video'); video.controls=true; video.muted=true; video.playsInline=true; video.style.width='100%'; video.style.height='100%';
-        vidCont.appendChild(video);
+        const video=document.createElement('video'); video.controls=true; video.muted=true; video.playsInline=true;
+        video.style.width='100%'; video.style.height='100%'; vidCont.appendChild(video);
+
         title.onclick=()=>{
           const open=vidCont.style.display==='block';
           if(open){ vidCont.style.display='none'; if(video.hlsInst){video.hlsInst.destroy();} video.pause(); video.removeAttribute('src'); video.load(); }
@@ -182,6 +197,7 @@
             vidCont.style.display='block';
           }
         };
+
         li.appendChild(title); li.appendChild(vidCont); listUl.appendChild(li);
       });
     }
