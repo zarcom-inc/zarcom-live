@@ -96,15 +96,6 @@
         };
       }
     }
-      if (Hls.isSupported()) {
-        const hls = new Hls(); hls.loadSource(src); hls.attachMedia(videoEl);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play());
-        videoEl._hls = hls;
-      } else {
-        videoEl.src = src;
-        videoEl.onloadedmetadata = () => videoEl.play();
-      }
-    }
 
     // Create popup with Live/Archive controls and title
     function createVideoPopup(cam) {
