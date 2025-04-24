@@ -123,7 +123,7 @@
     });
     map.fitBounds(bounds);
 
-    // List view construction with archive controls
+    // List view construction with archive controls and toggle Live
     function buildList() {
       const ul = document.getElementById('cameraList'); ul.innerHTML = '';
       cameras.forEach(cam => {
@@ -133,16 +133,30 @@
         const btnLive = document.createElement('button'); btnLive.textContent = 'Live';
         const btnArchive = document.createElement('button'); btnArchive.textContent = 'Archive';
         const sel = document.createElement('select'); sel.style.display = 'none';
-        // populate dates
         getLastDates(3).forEach(d => sel.append(new Option(d, d)));
         controls.append(btnLive, btnArchive, sel);
         const box = document.createElement('div'); box.className = 'cam-video';
         const vid = document.createElement('video'); vid.controls=true; vid.muted=true;
         box.append(vid);
-        btnLive.onclick = () => { sel.style.display='none'; box.style.display='block'; attachHls(vid, cam.urlLive); };
-        btnArchive.onclick = () => { sel.style.display='block'; box.style.display='block'; attachHls(vid, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`); };
+
+        btnLive.onclick = () => {
+          if (box.style.display === 'block') {
+            vid.pause(); if (vid._hls) { vid._hls.destroy(); delete vid._hls; }
+            box.style.display = 'none';
+          } else {
+            sel.style.display = 'none'; box.style.display = 'block'; attachHls(vid, cam.urlLive);
+          }
+        };
+        btnArchive.onclick = () => {
+          if (box.style.display === 'block' && sel.style.display === 'block') {
+            vid.pause(); if (vid._hls) { vid._hls.destroy(); delete vid._hls; }
+            box.style.display = 'none'; sel.style.display = 'none';
+          } else {
+            sel.style.display = 'block'; box.style.display = 'block'; attachHls(vid, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
+          }
+        };
         sel.onchange = () => btnArchive.onclick();
-        // default to live hidden until button click
+
         li.append(title, controls, box);
         ul.append(li);
       });
