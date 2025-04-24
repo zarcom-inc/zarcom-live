@@ -124,6 +124,7 @@
       });
     }
 
+    // Popup для карты
     function createVideoPopup(cam) {
       const c = document.createElement('div');
       c.className = 'video-popup';
@@ -140,8 +141,14 @@
       vid.controls=true; vid.muted=true; vid.style.width='100%'; vid.style.height='180px';
       c.append(title,ctr,vid);
 
-      bLive.onclick = ()=>{ sel.style.display='none'; attachHls(vid,cam.urlLive); };
-      bArch.onclick = ()=>{ sel.style.display='inline-block'; attachHls(vid,`${cam.urlArchive}/${sel.value}/index.m3u8`); };
+      bLive.onclick = ()=>{
+        sel.style.display='none';
+        attachHls(vid,cam.urlLive);
+      };
+      bArch.onclick = ()=>{
+        sel.style.display='inline-block';
+        attachHls(vid,`${cam.urlArchive}/${sel.value}/index.m3u8`);
+      };
       sel.onchange = ()=>bArch.onclick();
       bLive.onclick();
       return c;
@@ -190,8 +197,41 @@
           bArch.classList.remove('active');
         }
 
-        bLive.onclick = ()=>{ ... };  // логика открытия/закрытия Live
-        bArch.onclick = ()=>{ ... };  // логика открытия/закрытия Archive
+        bLive.onclick = ()=>{
+          if (box.style.display==='block' && bLive.classList.contains('active')) {
+            // закрываем
+            vid.pause();
+            if (vid._hls) { vid._hls.destroy(); delete vid._hls; }
+            box.style.display='none';
+            resetButtons();
+          } else {
+            // открываем Live
+            resetButtons();
+            bLive.classList.add('active');
+            sel.style.display='none';
+            box.style.display='block';
+            attachHls(vid,cam.urlLive);
+          }
+        };
+
+        bArch.onclick = ()=>{
+          if (box.style.display==='block' && bArch.classList.contains('active')) {
+            // закрываем
+            vid.pause();
+            if (vid._hls) { vid._hls.destroy(); delete vid._hls; }
+            box.style.display='none';
+            sel.style.display='none';
+            resetButtons();
+          } else {
+            // открываем Archive
+            resetButtons();
+            bArch.classList.add('active');
+            sel.style.display='inline-block';
+            box.style.display='block';
+            attachHls(vid,`${cam.urlArchive}/${sel.value}/index.m3u8`);
+          }
+        };
+
         sel.onchange = ()=>bArch.onclick();
 
         li.append(title,ctr,box);
@@ -200,9 +240,31 @@
       galleryBuilt = true;
     }
 
-    document.getElementById('toggleMapBtn').onclick = ()=>{ ... };
-    document.getElementById('toggleListBtn').onclick = ()=>{ ... };
-    function toggleButtons(mode) { ... }
+    // Переключение вкладок
+    document.getElementById('toggleMapBtn').onclick = ()=>{
+      if (galleryBuilt) {
+        document.querySelectorAll('#cameraList video').forEach(v=>{
+          v.pause();
+          if (v._hls) { v._hls.destroy(); delete v._hls; }
+        });
+      }
+      document.getElementById('map').style.display='block';
+      document.getElementById('cameraListView').style.display='none';
+      toggleButtons('map');
+      map.invalidateSize();
+    };
+    document.getElementById('toggleListBtn').onclick = ()=>{
+      buildGallery();
+      document.getElementById('map').style.display='none';
+      document.getElementById('cameraListView').style.display='block';
+      toggleButtons('list');
+    };
+    function toggleButtons(mode) {
+      const m = document.getElementById('toggleMapBtn'),
+            l = document.getElementById('toggleListBtn');
+      if (mode==='map') { m.classList.add('active'); l.classList.remove('active'); }
+      else             { l.classList.add('active'); m.classList.remove('active'); }
+    }
   </script>
 </body>
 </html>
