@@ -101,8 +101,28 @@
 
       const dates = getLastDates(3);
       dates.forEach(d => sel.append(new Option(d, d)));  
-      btnLive.onclick = () => { sel.style.display = 'none'; attachHls(video, cam.urlLive); container.classList.add('open'); };
-      btnArchive.onclick = () => { sel.style.display = 'block'; attachHls(video, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`); container.classList.add('open'); };
+      btnLive.onclick = () => {
+          if (box.classList.contains('open')) {
+            box.classList.remove('open');
+            setTimeout(() => box.style.display='none', 300);
+          } else {
+            sel.style.display = 'none';
+            attachHls(vid, cam.urlLive);
+            box.style.display = 'block';
+            requestAnimationFrame(() => box.classList.add('open'));
+          }
+        };
+      btnArchive.onclick = () => {
+          if (box.classList.contains('open') && sel.style.display === 'block') {
+            box.classList.remove('open');
+            setTimeout(() => box.style.display='none', 300);
+          } else {
+            sel.style.display = 'block';
+            attachHls(vid, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
+            box.style.display = 'block';
+            requestAnimationFrame(() => box.classList.add('open'));
+          }
+        };
       sel.onchange = () => btnArchive.onclick();
       btnLive.onclick();
       return container;
