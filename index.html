@@ -76,54 +76,16 @@
 
     // Attach HLS to video element
     function attachHls(videoEl, src) {
-      // Attach or reload HLS stream
       if (videoEl._hls) { videoEl._hls.destroy(); delete videoEl._hls; }
       if (Hls.isSupported()) {
         const hls = new Hls();
         hls.loadSource(src);
         hls.attachMedia(videoEl);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play());
+        hls.on(Hls.Events.MANIFEST_PARSED, () => { videoEl.play(); });
         videoEl._hls = hls;
       } else {
         videoEl.src = src;
-        videoEl.onloadedmetadata = () => videoEl.play();
-      }
-    }
-      if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(src);
-        hls.attachMedia(videoEl);
-        // start loading immediately
-        hls.startLoad();
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          videoEl.controls = true;
-          videoEl.play();
-        });
-        videoEl._hls = hls;
-      } else {
-        videoEl.src = src;
-        videoEl.preload = 'auto';
-        videoEl.onloadedmetadata = () => {
-          videoEl.controls = true;
-          videoEl.play();
-        };
-      }
-    }
-      if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(src);
-        hls.attachMedia(videoEl);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          videoEl.controls = true;
-          videoEl.play();
-        });
-        videoEl._hls = hls;
-      } else {
-        videoEl.src = src;
-        videoEl.onloadedmetadata = () => {
-          videoEl.controls = true;
-          videoEl.play();
-        };
+        videoEl.onloadedmetadata = () => { videoEl.play(); };
       }
     }
 
