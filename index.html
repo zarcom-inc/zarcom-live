@@ -76,10 +76,19 @@
 
     // Attach HLS to video element
     function attachHls(videoEl, src) {
-      // preload video to minimize buffering spinner
-      videoEl.preload = 'auto';
-      videoEl.controls = false;
+      // Attach or reload HLS stream
       if (videoEl._hls) { videoEl._hls.destroy(); delete videoEl._hls; }
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(src);
+        hls.attachMedia(videoEl);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play());
+        videoEl._hls = hls;
+      } else {
+        videoEl.src = src;
+        videoEl.onloadedmetadata = () => videoEl.play();
+      }
+    }
       if (Hls.isSupported()) {
         const hls = new Hls();
         hls.loadSource(src);
