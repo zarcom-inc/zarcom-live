@@ -24,7 +24,7 @@
 
     /* Preview tooltip */
     .cam-title { position: relative; display: inline-block; }
-    .cam-title:hover::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 160px; height: 90px; background-size: cover; background-position: center; border: 1px solid #ccc; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+    .cam-title:hover::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 160px; height: 90px; background-image: var(--preview); background-size: cover; background-position: center; border: 1px solid #ccc; box-shadow: 0 1px 4px rgba(0,0,0,0.2); } content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 160px; height: 90px; background-size: cover; background-position: center; border: 1px solid #ccc; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
 
     .popup-controls { display: flex; justify-content: space-between; margin: 4px 0; }
     .popup-controls button, .popup-controls select { flex: 1; margin-right: 4px; padding: 4px; font-size: 12px; border: 1px solid #ccc; border-radius: 2px; background: #fff; }
@@ -76,6 +76,8 @@
       else favorites.splice(idx, 1);
       localStorage.setItem('favorites', JSON.stringify(favorites));
       buildList();
+    // Show list view by default since map logic removed
+    document.getElementById('cameraListView').style.display = 'block';
     }
 
     function buildList() {
