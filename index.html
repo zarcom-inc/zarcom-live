@@ -101,28 +101,30 @@
 
       const dates = getLastDates(3);
       dates.forEach(d => sel.append(new Option(d, d)));  
-      btnLive.onclick = () => {
+      $1
           if (box.classList.contains('open')) {
             box.classList.remove('open');
             setTimeout(() => box.style.display='none', 300);
           } else {
             sel.style.display = 'none';
+            // preload HLS before animation
             attachHls(vid, cam.urlLive);
             box.style.display = 'block';
             requestAnimationFrame(() => box.classList.add('open'));
           }
-        };
-      btnArchive.onclick = () => {
+        $2
+      $1
           if (box.classList.contains('open') && sel.style.display === 'block') {
             box.classList.remove('open');
             setTimeout(() => box.style.display='none', 300);
           } else {
             sel.style.display = 'block';
+            // preload archive stream
             attachHls(vid, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
             box.style.display = 'block';
             requestAnimationFrame(() => box.classList.add('open'));
           }
-        };
+        $2
       sel.onchange = () => btnArchive.onclick();
       btnLive.onclick();
       return container;
