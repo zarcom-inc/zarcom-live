@@ -61,28 +61,14 @@
     .cam-video video {
       position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;
     }
-
     /* стили для popup на карте */
     .video-popup { width:320px; }
     .video-popup .popup-title { text-align:center; font-weight:bold; margin-bottom:6px; }
     .video-popup .popup-controls { display:flex; gap:4px; margin-bottom:6px; }
-
-    /* по-умолчанию прозрачный фон у всех popup */
     .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-      background:transparent; 
-      box-shadow:none;
+      background:transparent; box-shadow:none;
     }
-
-    /* А вот только для Home: белая рамка и тень */
-    .leaflet-popup-content-wrapper.home-popup {
-      background: #fff;
-      border: 1px solid #ccc;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      border-radius: 6px;
-    }
-    .leaflet-popup-tip.home-popup {
-      background: #fff;
-    }
+    .leaflet-popup-content { margin:0; padding:0; }
   </style>
 </head>
 <body>
@@ -169,25 +155,54 @@
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
     });
-
-    // Добавляем маркеры и popup
     cameras.forEach(cam=>{
-      const marker = L.marker([cam.lat,cam.lng],{icon:redIcon})
-        .addTo(map)
-        .bindTooltip(cam.id,{permanent:true,direction:'right'});
-
-      if (cam.id === 'Home') {
-        // только Home получает белую рамку
-        marker.bindPopup(
-          createVideoPopup(cam),
-          { className: 'home-popup' }
-        );
-      } else {
-        marker.bindPopup(createVideoPopup(cam));
-      }
+      L.marker([cam.lat,cam.lng],{icon:redIcon})
+       .addTo(map)
+       .bindTooltip(cam.id,{permanent:true,direction:'right'})
+       .bindPopup(createVideoPopup(cam));
     });
 
-    // … остальной код галереи и переключения вкладок без изменений …
+    // Построение галереи с «выключалкой»
+    let galleryBuilt = false;
+    function buildGallery() {
+      if (galleryBuilt) return;
+      const ul = document.getElementById('cameraList');
+      cameras.forEach(cam=>{
+        const li = document.createElement('li');
+        const title = document.createElement('div');
+        title.className='cam-title'; title.textContent=cam.id;
+
+        const ctr = document.createElement('div');
+        ctr.className='popup-controls';
+        const bLive = document.createElement('button'); bLive.textContent='Live';
+        const bArch = document.createElement('button'); bArch.textContent='Archive';
+        const sel = document.createElement('select'); sel.style.display='none';
+        getLastDates(3).forEach(d=>sel.append(new Option(d,d)));
+        ctr.append(bLive,bArch,sel);
+
+        const box = document.createElement('div'); box.className='cam-video';
+        const vid = document.createElement('video');
+        vid.controls=true; vid.muted=true;
+        box.append(vid);
+
+        function resetButtons() {
+          bLive.classList.remove('active');
+          bArch.classList.remove('active');
+        }
+
+        bLive.onclick = ()=>{ ... };  // логика открытия/закрытия Live
+        bArch.onclick = ()=>{ ... };  // логика открытия/закрытия Archive
+        sel.onchange = ()=>bArch.onclick();
+
+        li.append(title,ctr,box);
+        ul.append(li);
+      });
+      galleryBuilt = true;
+    }
+
+    document.getElementById('toggleMapBtn').onclick = ()=>{ ... };
+    document.getElementById('toggleListBtn').onclick = ()=>{ ... };
+    function toggleButtons(mode) { ... }
   </script>
 </body>
 </html>
