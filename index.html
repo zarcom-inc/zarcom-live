@@ -76,22 +76,26 @@
 
     // Attach HLS to video element
     function attachHls(videoEl, src) {
-      if (videoEl._hls) { videoEl._hls.destroy(); delete videoEl._hls; }
+      // Destroy previous HLS instance
+      if (videoEl._hls) {
+        videoEl._hls.destroy();
+        delete videoEl._hls;
+      }
       if (Hls.isSupported()) {
         const hls = new Hls();
         hls.loadSource(src);
         hls.attachMedia(videoEl);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => { videoEl.controls = true; videoEl.play(); });
-        videoEl._hls = hls;
-      } else {
-        const hls = new Hls();
-        hls.loadSource(src);
-        hls.attachMedia(videoEl);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => { videoEl.play(); });
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          videoEl.controls = true;
+          videoEl.play();
+        });
         videoEl._hls = hls;
       } else {
         videoEl.src = src;
-        videoEl.onloadedmetadata = () => { videoEl.play(); };
+        videoEl.onloadedmetadata = () => {
+          videoEl.controls = true;
+          videoEl.play();
+        };
       }
     }
 
@@ -104,7 +108,9 @@
       const btnArchive = document.createElement('button'); btnArchive.textContent = 'Archive';
       const sel = document.createElement('select'); sel.style.display = 'none';
       controls.append(btnLive, btnArchive, sel);
-      const video = document.createElement('video'); video.controls = false; // hide controls until ready video.muted = true;
+      const video = document.createElement('video');
+      video.controls = false; // hide controls until ready
+      video.muted = true;
       container.append(title, controls, video);
 
       const dates = getLastDates(3);
