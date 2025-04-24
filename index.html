@@ -133,37 +133,47 @@
 
     const bounds = [];
     cameras.forEach(cam => {
-      const popup = L.popup({ autoClose: false, closeOnClick: false, className: 'fade-popup' });
-      const container = document.createElement('div');
-      const title = document.createElement('div'); title.textContent = cam.id; title.style.marginBottom = '4px';
-      const controls = document.createElement('div'); controls.className = 'popup-controls';
-      const btnLive = document.createElement('button'); btnLive.textContent = 'Live';
-      const btnArchive = document.createElement('button'); btnArchive.textContent = 'Archive';
-      const sel = document.createElement('select'); sel.style.display = 'none';
-      const video = document.createElement('video'); video.controls = true; video.muted = true; video.style.width = '100%'; video.style.borderRadius = '6px';
-      const box = document.createElement('div'); box.className = 'cam-video'; box.style.display = 'block'; box.append(video);
+      const marker = L.marker([cam.lat, cam.lng], { icon: redIcon }).addTo(map);
+      marker.bindTooltip(cam.id, { permanent: true, direction: 'right' });
+      marker.bindPopup(createVideoPopup(cam));
+      bounds.push([cam.lat, cam.lng]);
+    });
 
-      getLastDates(3).forEach(d => sel.append(new Option(d, d)));
+    function createVideoPopup(cam) {
+      const container = document.createElement('div');
+      container.className = 'video-popup';
+      const title = document.createElement('div');
+      title.className = 'popup-title';
+      title.textContent = cam.id;
+      const controls = document.createElement('div');
+      controls.className = 'popup-controls';
+      const btnLive = document.createElement('button');
+      btnLive.textContent = 'Live';
+      const btnArchive = document.createElement('button');
+      btnArchive.textContent = 'Archive';
+      const sel = document.createElement('select');
+      sel.style.display = 'none';
       controls.append(btnLive, btnArchive, sel);
+      const video = document.createElement('video');
+      video.controls = true;
+      video.muted = true;
+      container.append(title, controls, video);
+
+      const dates = getLastDates(3);
+      dates.forEach(d => sel.append(new Option(d, d)));
 
       btnLive.onclick = () => {
         sel.style.display = 'none';
         attachHls(video, cam.urlLive);
       };
       btnArchive.onclick = () => {
-        sel.style.display = 'block'; attachHls(video, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
+        sel.style.display = 'block';
+        attachHls(video, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
       };
       sel.onchange = () => btnArchive.onclick();
-
-      btnLive.click();
-
-      container.append(title, controls, video);
-      popup.setContent(container);
-      const marker = L.marker([cam.lat, cam.lng], { icon: redIcon }).addTo(map);
-      marker.bindTooltip(cam.id, { permanent: true, direction: 'right' });
-      marker.on('click', () => marker.bindPopup(popup).openPopup());
-      bounds.push([cam.lat, cam.lng]);
-    });
+      btnLive.onclick();
+      return container;
+    }
 
     map.fitBounds(bounds);
   </script>
