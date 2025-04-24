@@ -76,7 +76,26 @@
 
     // Attach HLS to video element
     function attachHls(videoEl, src) {
+      // hide native controls (and spinner) until stream is ready
+      videoEl.controls = false;
       if (videoEl._hls) { videoEl._hls.destroy(); delete videoEl._hls; }
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(src);
+        hls.attachMedia(videoEl);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          videoEl.controls = true;
+          videoEl.play();
+        });
+        videoEl._hls = hls;
+      } else {
+        videoEl.src = src;
+        videoEl.onloadedmetadata = () => {
+          videoEl.controls = true;
+          videoEl.play();
+        };
+      }
+    }
       if (Hls.isSupported()) {
         const hls = new Hls(); hls.loadSource(src); hls.attachMedia(videoEl);
         hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play());
