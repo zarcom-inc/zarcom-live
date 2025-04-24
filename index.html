@@ -29,9 +29,32 @@
     #cameraListAlphabetical .video-container { display: none; width: 50%; max-width: 400px; aspect-ratio: 16 / 9; margin: 0 auto 16px; background: #000; }
     #cameraListAlphabetical video { width: 100%; height: 100%; object-fit: cover; }
 
-    /* Mobile adjustments */
-    @media (max-width: 768px) {
-      .filter-btn, #toggleMapBtn { display: none; }
+        /* Mobile adjustments */
+    @media (max-width: 600px) {
+      /* Hide filter icons and map toggle on small screens */
+      .filter-btn,
+      #toggleMapBtn {
+        display: none;
+      }
+      /* Ensure list toggle always visible */
+      #toggleListBtn {
+        display: inline-block;
+      }
+      .top-bar {
+        left: 0;
+        right: 0;
+        border-radius: 0;
+      }
+      /* Position list below top-bar */
+      #cameraListView {
+        top: 60px;
+      }
+      /* Full-width video on mobile */
+      #cameraListAlphabetical .video-container {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+      }
+    }
       .top-bar { left: 0; right: 0; border-radius: 0; }
       #cameraListView { top: 60px; }
       #cameraListAlphabetical .video-container { width: 100%; aspect-ratio: 16 / 9; }
