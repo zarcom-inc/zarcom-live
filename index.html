@@ -11,80 +11,53 @@
     header.site-header h1 { margin: 0; font-size: 20px; }
 
     #map { position: absolute; top: 60px; bottom: 0; width: 100%; }
-    #cameraListView {
-      display: none; position: absolute; top: 60px; left: 0; right: 0; bottom: 0;
-      background: #f9f9f9; overflow-y: auto; z-index: 1000; padding: 16px;
-    }
+    #cameraListView { display: none; position: absolute; top: 60px; left: 0; right: 0; bottom: 0; background: #f9f9f9; overflow-y: auto; z-index: 1000; padding: 10px; }
 
-    #cameraList {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 16px;
-    }
-
+    #cameraList { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; padding: 10px; }
     #cameraList li {
-      width: 320px;
-      background: #fff;
-      border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      width: 300px; background: #fff; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 12px; transition: transform 0.2s;
     }
+    #cameraList li:hover { transform: translateY(-3px); }
 
     .cam-title {
-      font-weight: bold;
-      font-size: 16px;
-      color: #333;
-      margin-bottom: 6px;
+      font-weight: bold; font-size: 16px; color: #333;
+      margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;
     }
-
+    .cam-status {
+      font-size: 12px; padding: 2px 6px; border-radius: 6px; color: #fff; background: #28a745;
+    }
     .popup-controls {
-      display: flex;
-      justify-content: space-between;
-      gap: 6px;
-      margin: 8px 0;
-      width: 100%;
+      display: flex; justify-content: space-between; gap: 6px; margin: 8px 0;
+    }
+    .popup-controls button {
+      flex: 1; padding: 6px; font-size: 14px; border: none; border-radius: 6px;
+      cursor: pointer; background: #f0f0f0; transition: background 0.2s;
+    }
+    .popup-controls button:hover { background: #e0e0e0; }
+    .popup-controls select {
+      flex: 1; padding: 6px; font-size: 14px; border-radius: 6px; display: none;
+    }
+    .cam-video {
+      width: 100%; padding-top: 56.25%; background: #000;
+      position: relative; display: none; border-radius: 6px; overflow: hidden; margin-top: 10px;
+    }
+    .cam-video video {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
     }
 
-    .popup-controls button, .popup-controls select {
-      flex: 1;
-      padding: 6px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background: #f1f1f1;
-    }
-
-    .video-popup { width: 320px; }
-    .video-popup video { width: 100%; height: 180px; object-fit: cover; }
-    .video-popup .popup-title { font-weight: bold; text-align: center; margin-bottom: 4px; color: #333; }
-
-    .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: transparent; box-shadow: none; }
-    .leaflet-popup-content { margin: 0; padding: 0; }
-
-    .top-bar {
-      position: absolute;
-      top: 70px; left: 16px;
-      z-index: 1100;
-      display: flex;
-      gap: 8px;
-    }
+    .top-bar { position: absolute; top: 70px; left: 16px; z-index: 1100; display: flex; gap: 8px; }
     .top-bar button {
-      padding: 8px;
-      border: none;
-      border-radius: 4px;
-      background: #fff;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-      cursor: pointer;
-      font-size: 16px;
+      padding: 8px; border: none; border-radius: 4px; background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer; font-size: 16px;
     }
     .top-bar button.active { background: #ddd; }
   </style>
 </head>
 <body>
+  <header class="site-header">
+    <h1>Zarcom Cameras Monitoring</h1>
+  </header>
   <div class="top-bar">
     <button id="toggleMapBtn" class="active">🗺️ Map</button>
     <button id="toggleListBtn">📋 List</button>
@@ -129,12 +102,8 @@
 
       const dates = getLastDates(3);
       dates.forEach(d => sel.append(new Option(d, d)));
-      btnLive.onclick = () => {
-        sel.style.display = 'none'; attachHls(video, cam.urlLive);
-      };
-      btnArchive.onclick = () => {
-        sel.style.display = 'block'; attachHls(video, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
-      };
+      btnLive.onclick = () => { sel.style.display = 'none'; attachHls(video, cam.urlLive); };
+      btnArchive.onclick = () => { sel.style.display = 'block'; attachHls(video, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`); };
       sel.onchange = () => btnArchive.onclick();
       btnLive.onclick();
       return container;
@@ -143,7 +112,6 @@
     const cameras = [
       { id: 'OFFICE', lat: 34.1372, lng: -118.3550, urlLive: '/hls/cam1.m3u8', urlArchiveBase: '/hls/archive/cam1' },
       { id: 'BBQ', lat: 34.1602, lng: -118.2547, urlLive: '/hls/cam2.m3u8', urlArchiveBase: '/hls/archive/cam2' },
-      { id: '5STAR', lat: 34.1212, lng: -118.4089, urlLive: '/hls/cam3.m3u8', urlArchiveBase: '/hls/archive/cam3' },
       { id: "Trader Jo's", lat: 34.15996, lng: -118.25431, urlLive: '/hls/cam5.m3u8', urlArchiveBase: '/hls/archive/cam5' },
       { id: 'Master BBQ', lat: 34.14667, lng: -118.26278, urlLive: '/hls/cam6.m3u8', urlArchiveBase: '/hls/archive/cam6' },
       { id: 'BJ-1', lat: 34.20205, lng: -118.40886, urlLive: '/hls/cam8.m3u8', urlArchiveBase: '/hls/archive/cam8' },
@@ -173,32 +141,28 @@
       const ul = document.getElementById('cameraList'); ul.innerHTML = '';
       cameras.forEach(cam => {
         const li = document.createElement('li');
-        const title = document.createElement('div'); title.className = 'cam-title'; title.textContent = cam.id;
-        const controls = document.createElement('div'); controls.className = 'popup-controls';
+
+        const title = document.createElement('div');
+        title.className = 'cam-title';
+        title.innerHTML = `${cam.id} <span class="cam-status">● Live</span>`;
+
+        const controls = document.createElement('div');
+        controls.className = 'popup-controls';
         const btnLive = document.createElement('button'); btnLive.textContent = 'Live';
         const btnArchive = document.createElement('button'); btnArchive.textContent = 'Archive';
-        const sel = document.createElement('select'); sel.style.display = 'none';
+        const sel = document.createElement('select');
         getLastDates(3).forEach(d => sel.append(new Option(d, d)));
         controls.append(btnLive, btnArchive, sel);
+
         const box = document.createElement('div'); box.className = 'cam-video';
-        const vid = document.createElement('video'); vid.controls=true; vid.muted=true;
+        const vid = document.createElement('video'); vid.controls = true; vid.muted = true;
         box.append(vid);
 
         btnLive.onclick = () => {
-          if (box.style.display === 'block') {
-            vid.pause(); if (vid._hls) { vid._hls.destroy(); delete vid._hls; }
-            box.style.display = 'none';
-          } else {
-            sel.style.display = 'none'; box.style.display = 'block'; attachHls(vid, cam.urlLive);
-          }
+          sel.style.display = 'none'; box.style.display = 'block'; attachHls(vid, cam.urlLive);
         };
         btnArchive.onclick = () => {
-          if (box.style.display === 'block' && sel.style.display === 'block') {
-            vid.pause(); if (vid._hls) { vid._hls.destroy(); delete vid._hls; }
-            box.style.display = 'none'; sel.style.display = 'none';
-          } else {
-            sel.style.display = 'block'; box.style.display = 'block'; attachHls(vid, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
-          }
+          sel.style.display = 'block'; box.style.display = 'block'; attachHls(vid, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
         };
         sel.onchange = () => btnArchive.onclick();
 
