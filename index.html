@@ -6,75 +6,93 @@
   <title>Zarcom Cameras Map with Archive</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    html, body {
-      margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden;
-      background-color: #121212; color: #f0f0f0;
-      font-family: sans-serif;
-    }
-    header.site-header {
-      position: absolute; top: 0; left: 0; width: 100%; height: 60px;
-      background: #222; color: #fff; display: flex; align-items: center;
-      padding: 0 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 1200;
-    }
+    html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
+    header.site-header { position: absolute; top: 0; left: 0; width: 100%; height: 60px; background: #333; color: #fff; display: flex; align-items: center; padding: 0 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 1200; }
     header.site-header h1 { margin: 0; font-size: 20px; }
 
     #map { position: absolute; top: 60px; bottom: 0; width: 100%; }
     #cameraListView {
       display: none; position: absolute; top: 60px; left: 0; right: 0; bottom: 0;
-      background: #1e1e1e; overflow-y: auto; z-index: 1000; padding: 10px;
+      background: #f9f9f9; overflow-y: auto; z-index: 1000; padding: 16px;
     }
 
     #cameraList {
-      display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
     }
+
     #cameraList li {
-      width: 300px; background: #2c2c2c; border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-      padding: 12px; transition: transform 0.2s;
+      width: 300px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    #cameraList li:hover { transform: translateY(-3px); }
 
     .cam-title {
-      font-weight: bold; font-size: 16px; color: #eee;
-      margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;
+      font-weight: bold;
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 6px;
     }
-    .cam-status {
-      font-size: 12px; padding: 2px 6px; border-radius: 6px; color: #fff; background: #28a745;
-    }
+
     .popup-controls {
-      display: flex; justify-content: space-between; gap: 6px; margin: 8px 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      margin: 8px 0;
+      width: 100%;
     }
-    .popup-controls button {
-      flex: 1; padding: 6px; font-size: 14px; border: none; border-radius: 6px;
-      cursor: pointer; background: #444; color: #fff; transition: background 0.2s;
+
+    .popup-controls button, .popup-controls select {
+      flex: 1;
+      padding: 6px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #f1f1f1;
     }
-    .popup-controls button:hover { background: #666; }
-    .popup-controls select {
-      flex: 1; padding: 6px; font-size: 14px; border-radius: 6px; display: none;
-    }
+
     .cam-video {
-      width: 100%; padding-top: 56.25%; background: #000;
-      position: relative; display: none; border-radius: 6px; overflow: hidden; margin-top: 10px;
+      width: 100%;
+      padding-top: 56.25%;
+      position: relative;
+      background: #000;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 10px;
+      display: none;
     }
+
     .cam-video video {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
     }
+
     .top-bar {
-      position: absolute; top: 70px; left: 16px; z-index: 1100; display: flex; gap: 8px;
+      position: absolute;
+      top: 70px; left: 16px;
+      z-index: 1100;
+      display: flex;
+      gap: 8px;
     }
     .top-bar button {
-      padding: 8px; border: none; border-radius: 4px; background: #333;
-      color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); cursor: pointer; font-size: 16px;
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      cursor: pointer;
+      font-size: 16px;
     }
-    .top-bar button.active { background: #555; }
-    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
-      background: #1e1e1e; color: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.5);
-      animation: fadein 0.3s ease-out;
-    }
-    @keyframes fadein {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    .top-bar button.active { background: #ddd; }
   </style>
 </head>
 <body>
@@ -87,95 +105,5 @@
   </div>
   <div id="map"></div>
   <div id="cameraListView"><ul id="cameraList"></ul></div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script>
-    function getLastDates(days) {
-      const dates = [];
-      for (let i = 0; i < days; i++) {
-        const d = new Date(); d.setUTCDate(d.getUTCDate() - i);
-        dates.push(d.toISOString().slice(0,10));
-      }
-      return dates;
-    }
-
-    function attachHls(videoEl, src) {
-      if (videoEl._hls) { videoEl._hls.destroy(); delete videoEl._hls; }
-      if (Hls.isSupported()) {
-        const hls = new Hls(); hls.loadSource(src); hls.attachMedia(videoEl);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => videoEl.play());
-        videoEl._hls = hls;
-      } else {
-        videoEl.src = src;
-        videoEl.onloadedmetadata = () => videoEl.play();
-      }
-    }
-
-    const cameras = [
-      { id: 'OFFICE', lat: 34.1372, lng: -118.3550, urlLive: '/hls/cam1.m3u8', urlArchiveBase: '/hls/archive/cam1' },
-      { id: 'BBQ', lat: 34.1602, lng: -118.2547, urlLive: '/hls/cam2.m3u8', urlArchiveBase: '/hls/archive/cam2' },
-      { id: "Trader Jo's", lat: 34.15996, lng: -118.25431, urlLive: '/hls/cam5.m3u8', urlArchiveBase: '/hls/archive/cam5' },
-      { id: 'Master BBQ', lat: 34.14667, lng: -118.26278, urlLive: '/hls/cam6.m3u8', urlArchiveBase: '/hls/archive/cam6' },
-      { id: 'BJ-1', lat: 34.20205, lng: -118.40886, urlLive: '/hls/cam8.m3u8', urlArchiveBase: '/hls/archive/cam8' },
-      { id: 'BJ-2', lat: 34.20225, lng: -118.40866, urlLive: '/hls/cam9.m3u8', urlArchiveBase: '/hls/archive/cam9' },
-      { id: 'Home', lat: 34.20793, lng: -118.36923, urlLive: '/hls/cam10.m3u8', urlArchiveBase: '/hls/archive/cam10' },
-      { id: 'Meat Master', lat: 34.19413, lng: -118.36469, urlLive: '/hls/cam11.m3u8', urlArchiveBase: '/hls/archive/cam11' }
-    ];
-
-    const map = L.map('map', { zoomControl: true });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    const redIcon = new L.Icon({
-      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      iconSize: [20, 32], iconAnchor: [10, 32], popupAnchor: [1, -28], shadowSize: [32, 32]
-    });
-
-    const bounds = [];
-    cameras.forEach(cam => {
-      const marker = L.marker([cam.lat, cam.lng], { icon: redIcon }).addTo(map);
-      marker.bindTooltip(cam.id, { permanent: true, direction: 'right' });
-      marker.bindPopup(createVideoPopup(cam));
-      bounds.push([cam.lat, cam.lng]);
-    });
-
-    function createVideoPopup(cam) {
-      const container = document.createElement('div');
-      container.className = 'video-popup';
-      const title = document.createElement('div');
-      title.className = 'popup-title';
-      title.textContent = cam.id;
-      const controls = document.createElement('div');
-      controls.className = 'popup-controls';
-      const btnLive = document.createElement('button');
-      btnLive.textContent = 'Live';
-      const btnArchive = document.createElement('button');
-      btnArchive.textContent = 'Archive';
-      const sel = document.createElement('select');
-      sel.style.display = 'none';
-      controls.append(btnLive, btnArchive, sel);
-      const video = document.createElement('video');
-      video.controls = true;
-      video.muted = true;
-      container.append(title, controls, video);
-
-      const dates = getLastDates(3);
-      dates.forEach(d => sel.append(new Option(d, d)));
-
-      btnLive.onclick = () => {
-        sel.style.display = 'none';
-        attachHls(video, cam.urlLive);
-      };
-      btnArchive.onclick = () => {
-        sel.style.display = 'block';
-        attachHls(video, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`);
-      };
-      sel.onchange = () => btnArchive.onclick();
-      btnLive.onclick();
-      return container;
-    }
-
-    map.fitBounds(bounds);
-  </script>
 </body>
 </html>
