@@ -41,8 +41,15 @@
 
     #cameraListView {
       display: none;
-      position: absolute; top: 50px; left: 0; right: 0; bottom: 0;
-      background: #f9f9f9; overflow-y: auto; z-index: 1000;
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      width: 320px;
+      height: calc(100% - 60px);
+      transform: translateX(-50%);
+      background: #f9f9f9;
+      overflow-y: auto;
+      z-index: 1000;
       padding: 10px;
     }
     #cameraListView ul { list-style: none; margin: 0; padding: 0; }
@@ -52,10 +59,11 @@
     }
     .cam-title { font-weight: bold; cursor: pointer; margin-bottom: 6px; }
     .cam-video {
-      display: none; position: relative;
-      width: 100%; max-width: 640px;
-      padding-top: 56.25%; /* 16:9 */
-      margin: 0 auto;
+      display: none;
+      position: relative;
+      width: 320px;
+      height: 180px;
+      margin: 0 auto 16px;
       background: #000;
     }
     .cam-video video {
