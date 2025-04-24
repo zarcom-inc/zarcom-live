@@ -21,6 +21,11 @@
     .popup-controls button, .popup-controls select { flex: 1; margin-right: 4px; padding: 4px; font-size: 12px; border: 1px solid #ccc; border-radius: 2px; background: #fff; }
     .popup-controls select { margin-right: 0; }
 
+    /* Shift zoom control down to avoid overlap with header and top-bar */
+    .leaflet-control-zoom {
+      top: 110px !important;
+    }
+
     .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: transparent; box-shadow: none; }
     .leaflet-popup-content { margin: 0; padding: 0; }
 
@@ -176,9 +181,3 @@
       buildList();
       document.getElementById('map').style.display='none';
       document.getElementById('cameraListView').style.display='block';
-      document.getElementById('toggleListBtn').classList.add('active');
-      document.getElementById('toggleMapBtn').classList.remove('active');
-    };
-  </script>
-</body>
-</html>
