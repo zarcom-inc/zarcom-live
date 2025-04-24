@@ -167,9 +167,9 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     function createManagedPopup(url) {
+      // Use fixed-size popup container to maintain correct aspect ratio
       const container = document.createElement('div');
-      container.style.width = '320px';
-      container.style.aspectRatio = '16/9';
+      container.className = 'video-popup';
       const video = document.createElement('video');
       video.controls = true;
       video.muted = true;
@@ -190,7 +190,9 @@
         }
       };
       container.onPopupClose = () => {
-        if (hls) hls.destroy();
+        if (hls) {
+          hls.destroy();
+        }
         video.pause();
         video.src = '';
       };
