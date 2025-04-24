@@ -13,7 +13,7 @@
     #map { position: absolute; top: 60px; bottom: 0; width: 100%; }
     #cameraListView { display: none; position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 600px; bottom: 0; background: #f9f9f9; overflow-y: auto; z-index: 1000; padding: 10px; }
 
-    /* Popup & list archive styling */
+    /* Animation for popups and camera list videos */
     .video-popup, .cam-video { width: 320px; opacity: 0; transform: scale(0.8); transition: opacity 0.3s ease, transform 0.3s ease; }
     .video-popup.open, .cam-video.open { opacity: 1; transform: scale(1); }
 
@@ -51,6 +51,19 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
+    // Camera configuration
+    const cameras = [
+      { id: 'OFFICE', lat: 34.1372, lng: -118.3550, urlLive: '/hls/cam1.m3u8', urlArchiveBase: '/hls/archive/cam1' },
+      { id: 'BBQ', lat: 34.1602, lng: -118.2547, urlLive: '/hls/cam2.m3u8', urlArchiveBase: '/hls/archive/cam2' },
+      { id: '5STAR', lat: 34.1212, lng: -118.4089, urlLive: '/hls/cam3.m3u8', urlArchiveBase: '/hls/archive/cam3' },
+      { id: "Trader Jo's", lat: 34.15996, lng: -118.25431, urlLive: '/hls/cam5.m3u8', urlArchiveBase: '/hls/archive/cam5' },
+      { id: 'Master BBQ', lat: 34.14667, lng: -118.26278, urlLive: '/hls/cam6.m3u8', urlArchiveBase: '/hls/archive/cam6' },
+      { id: 'BJ-1', lat: 34.20205, lng: -118.40886, urlLive: '/hls/cam8.m3u8', urlArchiveBase: '/hls/archive/cam8' },
+      { id: 'BJ-2', lat: 34.20225, lng: -118.40866, urlLive: '/hls/cam9.m3u8', urlArchiveBase: '/hls/archive/cam9' },
+      { id: 'Home', lat: 34.20793, lng: -118.36923, urlLive: '/hls/cam10.m3u8', urlArchiveBase: '/hls/archive/cam10' },
+      { id: 'Meat Master', lat: 34.19413, lng: -118.36469, urlLive: '/hls/cam11.m3u8', urlArchiveBase: '/hls/archive/cam11' }
+    ];
+
     // Utility to get last N dates as YYYY-MM-DD
     function getLastDates(days) {
       const dates = [];
@@ -88,8 +101,8 @@
 
       const dates = getLastDates(3);
       dates.forEach(d => sel.append(new Option(d, d)));  
-      btnLive.onclick = () => { sel.style.display = 'none'; attachHls(video, cam.urlLive); };
-      btnArchive.onclick = () => { sel.style.display = 'block'; attachHls(video, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`); };
+      btnLive.onclick = () => { sel.style.display = 'none'; attachHls(video, cam.urlLive); container.classList.add('open'); };
+      btnArchive.onclick = () => { sel.style.display = 'block'; attachHls(video, `${cam.urlArchiveBase}/${sel.value}/index.m3u8`); container.classList.add('open'); };
       sel.onchange = () => btnArchive.onclick();
       btnLive.onclick();
       return container;
@@ -113,10 +126,6 @@
       bounds.push([cam.lat, cam.lng]);
     });
     map.fitBounds(bounds);
-    map.on('popupopen', e => {
-      const container = e.popup.getContent();
-      container.classList.add('open');
-    });
 
     // List view construction with archive controls and toggle Live with animation
     function buildList() {
@@ -170,19 +179,6 @@
       document.getElementById('toggleListBtn').classList.add('active');
       document.getElementById('toggleMapBtn').classList.remove('active');
     };
-
-    // Camera configuration
-    const cameras = [
-      { id: 'OFFICE', lat: 34.1372, lng: -118.3550, urlLive: '/hls/cam1.m3u8', urlArchiveBase: '/hls/archive/cam1' },
-      { id: 'BBQ', lat: 34.1602, lng: -118.2547, urlLive: '/hls/cam2.m3u8', urlArchiveBase: '/hls/archive/cam2' },
-      { id: '5STAR', lat: 34.1212, lng: -118.4089, urlLive: '/hls/cam3.m3u8', urlArchiveBase: '/hls/archive/cam3' },
-      { id: "Trader Jo's", lat: 34.15996, lng: -118.25431, urlLive: '/hls/cam5.m3u8', urlArchiveBase: '/hls/archive/cam5' },
-      { id: 'Master BBQ', lat: 34.14667, lng: -118.26278, urlLive: '/hls/cam6.m3u8', urlArchiveBase: '/hls/archive/cam6' },
-      { id: 'BJ-1', lat: 34.20205, lng: -118.40886, urlLive: '/hls/cam8.m3u8', urlArchiveBase: '/hls/archive/cam8' },
-      { id: 'BJ-2', lat: 34.20225, lng: -118.40866, urlLive: '/hls/cam9.m3u8', urlArchiveBase: '/hls/archive/cam9' },
-      { id: 'Home', lat: 34.20793, lng: -118.36923, urlLive: '/hls/cam10.m3u8', urlArchiveBase: '/hls/archive/cam10' },
-      { id: 'Meat Master', lat: 34.19413, lng: -118.36469, urlLive: '/hls/cam11.m3u8', urlArchiveBase: '/hls/archive/cam11' }
-    ];
   </script>
 </body>
 </html>
