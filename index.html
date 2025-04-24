@@ -8,8 +8,6 @@
   <style>
     html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
     #map { height: 100%; width: 100%; }
-    .video-popup { width: 300px; height: 170px; overflow: hidden; }
-    video, iframe { width: 100%; height: 100%; border: none; object-fit: cover; }
 
     .top-bar {
       position: absolute; top: 10px; left: 10px; right: 10px; z-index: 1100;
@@ -17,16 +15,15 @@
       background: white; padding: 10px; border-radius: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
-    .top-bar input.search-box {
+    .top-bar input {
       flex: 1; padding: 8px 12px; font-size: 14px;
       border-radius: 20px; border: 1px solid #ccc;
     }
     .top-bar button {
-      padding: 6px 12px; border: none;
-      border-radius: 16px; background: #eee;
-      cursor: pointer; font-size: 14px;
+      padding: 6px 12px; border: none; border-radius: 16px;
+      background: #eee; cursor: pointer; font-size: 14px;
     }
-    .top-bar button.active { background: #ddd; }
+    .top-bar .active { background: #ddd; }
 
     #controls {
       position: absolute; bottom: 20px; right: 20px; z-index: 1000;
@@ -36,44 +33,44 @@
       width: 40px; height: 40px; background: white;
       border-radius: 50%; border: 1px solid rgba(0,0,0,0.2);
       box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-size: 20px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: background-color 0.3s;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background-color 0.3s;
     }
     #controls button:hover { background: #f1f1f1; }
 
-    /* List view container */
+    /* List View */
     #cameraListView {
-      display: none; position: absolute;
-      top: 60px; bottom: 0; left: 0; right: 0;
-      background: white; overflow-y: auto; z-index: 1050;
-      padding: 10px;
+      display: none;
+      position: absolute; top: 60px; bottom: 0; left: 0; right: 0;
+      background: white; overflow-y: auto; z-index: 1000; padding: 10px;
     }
-    #cameraListView ul { list-style: none; margin: 0; padding: 0; }
-    #cameraListView li { margin-bottom: 20px; }
-    #cameraListView .title {
-      font-weight: bold; margin-bottom: 6px; cursor: pointer;
+    #cameraListAlphabetical { list-style: none; padding: 0; margin: 0; }
+    #cameraListAlphabetical li { margin-bottom: 16px; }
+    #cameraListAlphabetical .title {
+      font-weight: bold; cursor: pointer; margin-bottom: 8px;
     }
-    #cameraListView .video-list-container { display: none; height: 200px; }
-    #cameraListView video { width: 100%; height: 100%; }
+    #cameraListAlphabetical .video-list-container {
+      display: none; width: 100%; height: 200px; overflow: hidden;
+    }
 
-    /* Hide icon buttons on mobile */
     @media (max-width: 768px) {
-      .top-bar button { display: none; }
+      .top-bar button:nth-child(n+2) { display: none; }
       .top-bar { left: 0; right: 0; border-radius: 0; }
+      #cameraListView { top: 50px; }
     }
   </style>
 </head>
 <body>
   <div class="top-bar">
-    <input type="text" id="searchBox" class="search-box" placeholder="Поиск камеры">
+    <input type="text" id="searchBox" placeholder="Поиск камеры">
     <button class="filter-btn" data-type="food">🍔</button>
     <button class="filter-btn" data-type="parking">Ⓜ️</button>
     <button class="filter-btn" data-type="gas">⛽</button>
     <button class="filter-btn" data-type="laundry">🧺</button>
     <button class="filter-btn" data-type="building">🏢</button>
     <button class="filter-btn" data-type="ev">🔌</button>
-    <button id="toggleMapBtn" title="Показать/скрыть карту">🗺️</button>
-    <button id="toggleListBtn" title="Список камер">📋</button>
+    <button id="toggleMapBtn">🗺️</button>
+    <button id="toggleListBtn">📋</button>
   </div>
 
   <div id="map"></div>
@@ -82,121 +79,119 @@
   <div id="controls">
     <button id="zoom-in">+</button>
     <button id="zoom-out">−</button>
-    <button id="locateBtn" title="Моя локация">🎯</button>
+    <button id="locateBtn">🎯</button>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
+    // Icon and map init
     const redIcon = new L.Icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
     });
     const map = L.map('map', { zoomControl: false });
-    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
     const bounds = L.latLngBounds([]);
 
     // Controls
     document.getElementById('zoom-in').onclick = () => map.zoomIn();
     document.getElementById('zoom-out').onclick = () => map.zoomOut();
-    document.getElementById('locateBtn').onclick = () => map.locate({ setView: true, maxZoom: 16 });
-    map.on('locationfound', e => { L.marker(e.latlng,{icon:redIcon}).addTo(map).bindTooltip('Вы здесь').openTooltip(); map.setView(e.latlng,16); });
-    map.on('locationerror',() => alert('Не удалось получить геолокацию'));
+    document.getElementById('locateBtn').onclick = () => map.locate({setView:true, maxZoom:16});
+    map.on('locationfound', e => {L.marker(e.latlng,{icon:redIcon}).addTo(map).bindTooltip('Вы здесь').openTooltip(); map.setView(e.latlng,16);});
+    map.on('locationerror', () => alert('Не удалось получить геолокацию'));
     document.getElementById('toggleMapBtn').onclick = () => {
       if(map.hasLayer(tileLayer)) map.removeLayer(tileLayer); else tileLayer.addTo(map);
     };
 
     // Video popup helper
     function createManagedPopup(url) {
-      const c = document.createElement('div'); c.className='video-popup'; const v=document.createElement('video');
-      v.controls=true; v.autoplay=false; v.muted=true; v.playsInline=true; c.appendChild(v);
-      let hls;
-      c.onPopupOpen=()=>{
-        if(Hls.isSupported()){ hls=new Hls(); hls.loadSource(url); hls.attachMedia(v); hls.on(Hls.Events.MANIFEST_PARSED,()=>v.play()); }
-        else{ v.src=url; v.onloadedmetadata=()=>v.play(); }
+      const c = document.createElement('div'); c.className='video-popup';
+      const v = document.createElement('video'); v.controls=true; v.autoplay=false; v.muted=true; v.playsInline=true; c.appendChild(v);
+      let hlsInst;
+      c.onPopupOpen = () => {
+        if(Hls.isSupported()) { hlsInst=new Hls(); hlsInst.loadSource(url); hlsInst.attachMedia(v); hlsInst.on(Hls.Events.MANIFEST_PARSED,()=>v.play()); }
+        else { v.src=url; v.onloadedmetadata=()=>v.play(); }
       };
-      c.onPopupClose=()=>{ if(hls){ hls.destroy(); hls=null;} v.pause(); v.removeAttribute('src'); v.load(); };
+      c.onPopupClose = () => { if(hlsInst){hlsInst.destroy(); hlsInst=null;} v.pause(); v.removeAttribute('src'); v.load(); };
       return c;
     }
 
-    const markersData = [
-      { id:'OFFICE',address:'300 North 3rd Street, Burbank, CA',url:'/hls/cam1.m3u8',type:'building' },
-      { id:'BBQ',lat:34.1601849,lng:-118.2546613,url:'/hls/cam2.m3u8',type:'food' },
-      { id:'5STAR',address:'8230 Allott Ave, Panorama City, CA 91402',url:'/hls/cam3.m3u8',type:'laundry' },
-      { id:"Trader Jo's",lat:34.1599591,lng:-118.2543096,url:'/hls/cam5.m3u8',type:'food' },
-      { id:'Master BBQ',lat:34.1466667,lng:-118.2627778,url:'/hls/cam6.m3u8',type:'food' },
-      { id:'BJ-1',lat:34.2020529,lng:-118.4088614,url:'/hls/cam8.m3u8',type:'parking' },
-      { id:'BJ-2',lat:34.2022529,lng:-118.4086614,url:'/hls/cam9.m3u8',type:'parking' },
-      { id:'Home',lat:34.20793,lng:-118.3692304,url:'/hls/cam10.m3u8',type:'building' },
-      { id:'Meat master',lat:34.1941275,lng:-118.3646868,url:'/hls/cam11.m3u8',type:'food' }
+    // Marker data
+    const markers = [
+      { id:'OFFICE', address:'300 North 3rd Street, Burbank, CA', url:'/hls/cam1.m3u8', type:'building' },
+      { id:'BBQ', lat:34.16018494, lng:-118.25466125, url:'/hls/cam2.m3u8', type:'food' },
+      { id:'5STAR', address:'8230 Allott Ave, Panorama City, CA 91402', url:'/hls/cam3.m3u8', type:'laundry' },
+      { id:"Trader Jo's", lat:34.15995909, lng:-118.25430965, url:'/hls/cam5.m3u8', type:'food' },
+      { id:'Master BBQ', lat:34.14666667, lng:-118.26277778, url:'/hls/cam6.m3u8', type:'food' },
+      { id:'BJ-1', lat:34.20205288, lng:-118.40886142, url:'/hls/cam8.m3u8', type:'parking' },
+      { id:'BJ-2', lat:34.20225288, lng:-118.40866142, url:'/hls/cam9.m3u8', type:'parking' },
+      { id:'Home', lat:34.20793003, lng:-118.36923044, url:'/hls/cam10.m3u8', type:'building' },
+      { id:'Meat master', lat:34.19412745, lng:-118.36468681, url:'/hls/cam11.m3u8', type:'food' }
     ];
 
-    const markerRefs=[];
+    const markerRefs = [];
     (async()=>{
-      for(const cam of markersData){
-        let lat, lng;
-        if(cam.lat!==undefined){ lat=cam.lat; lng=cam.lng; }
-        else{
+      for(const cam of markers){
+        let lat=cam.lat, lng=cam.lng;
+        if(lat===undefined||lng===undefined){
           const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cam.address)}`);
-          const d=await res.json(); if(!d.length) continue; lat=+d[0].lat; lng=+d[0].lon;
+          const data=await res.json(); if(!data.length) continue;
+          lat=+data[0].lat; lng=+data[0].lon;
         }
         bounds.extend([lat,lng]);
         const m=L.marker([lat,lng],{icon:redIcon}).addTo(map);
         const p=createManagedPopup(cam.url);
-        m.bindPopup(p,{maxWidth:650}); m.bindTooltip(cam.id,{permanent:true,direction:'right',offset:[10,0]});
-        m.on('popupopen',()=>{ p.onPopupOpen(); map.setView(m.getLatLng(),map.getZoom());});
+        m.bindPopup(p,{maxWidth:650}).bindTooltip(cam.id,{permanent:true,direction:'right',offset:[10,0]});
+        m.on('popupopen',()=>{p.onPopupOpen(); map.setView(m.getLatLng(),map.getZoom(),{animate:true});});
         m.on('popupclose',()=>p.onPopupClose());
-        markerRefs.push({id:cam.id,url:cam.url,marker:m});
+        markerRefs.push({marker:m,id:cam.id,cam});
       }
       map.fitBounds(bounds.pad(0.2));
     })();
 
-    // Search
-    document.getElementById('searchBox').addEventListener('input',e=>{
-      const val=e.target.value.toLowerCase();
-      markerRefs.forEach(({id,marker})=>{
-        if(id.toLowerCase().includes(val)){
-          marker.openPopup(); map.setView(marker.getLatLng(),18);
-        }
-      });
+    // Search filter (optional)
+    document.getElementById('searchBox').addEventListener('input',()=>{
+      const q=event.target.value.trim().toLowerCase();
+      markerRefs.forEach(({marker,id})=>{ if(id.toLowerCase().includes(q)){ marker.openPopup(); map.setView(marker.getLatLng(),18); }});
     });
 
-    // List view
+    // List view logic
     const toggleListBtn=document.getElementById('toggleListBtn');
-    const mapEl=document.getElementById('map');
-    const listEl=document.getElementById('cameraListView');
-    const ulEl=document.getElementById('cameraListAlphabetical');
-    let inList=false;
+    const mapContainer=document.getElementById('map');
+    const listContainer=document.getElementById('cameraListView');
+    const listUl=document.getElementById('cameraListAlphabetical');
+    let listMode=false;
 
     function buildAlphabeticalList(){
-      ulEl.innerHTML='';
-      markerRefs
-        .slice()
-        .sort((a,b)=>a.id.localeCompare(b.id,undefined,{sensitivity:'base'}))
-        .forEach(cam=>{
-          const li=document.createElement('li');
-          const title=document.createElement('div');
-          title.className='title'; title.textContent=cam.id;
-          const vidContainer=document.createElement('div');
-          vidContainer.className='video-list-container';
-          const vid=document.createElement('video');
-          vid.controls=true; vid.muted=true; vid.playsInline=true;
-          vidContainer.appendChild(vid);
-          title.onclick=()=>{ vidContainer.style.display = vidContainer.style.display==='none'?'block':'none';
-            if(vidContainer.style.display==='block'){
-              if(Hls.isSupported()){ const h=new Hls(); h.loadSource(cam.url); h.attachMedia(vid); }
-              else vid.src=cam.url;
-            }
-          };
-          li.appendChild(title); li.appendChild(vidContainer); ulEl.appendChild(li);
-        });
+      listUl.innerHTML='';
+      const sorted=markerRefs.slice().sort((a,b)=>a.id.localeCompare(b.id,{sensitivity:'base'}));
+      sorted.forEach(({id,cam})=>{
+        const li=document.createElement('li');
+        const title=document.createElement('div'); title.textContent=id; title.className='title';
+        const vidCont=document.createElement('div'); vidCont.className='video-list-container';
+        const video=document.createElement('video'); video.controls=true; video.muted=true; video.playsInline=true; video.style.width='100%'; video.style.height='100%';
+        vidCont.appendChild(video);
+        title.onclick=()=>{
+          const open=vidCont.style.display==='block';
+          if(open){ vidCont.style.display='none'; if(video.hlsInst){video.hlsInst.destroy();} video.pause(); video.removeAttribute('src'); video.load(); }
+          else{
+            if(Hls.isSupported()){ const hls=new Hls(); hls.loadSource(cam.url); hls.attachMedia(video); hls.on(Hls.Events.MANIFEST_PARSED,()=>video.play()); video.hlsInst=hls; }
+            else{ video.src=cam.url; video.onloadedmetadata=()=>video.play(); }
+            vidCont.style.display='block';
+          }
+        };
+        li.appendChild(title); li.appendChild(vidCont); listUl.appendChild(li);
+      });
     }
-    toggleListBtn.onclick=()=>{
-      inList=!inList;
-      if(inList){ mapEl.style.display='none'; listEl.style.display='block'; buildAlphabeticalList(); toggleListBtn.classList.add('active'); }
-      else{ listEl.style.display='none'; mapEl.style.display='block'; toggleListBtn.classList.remove('active'); map.invalidateSize(); }
-    };
+
+    function toggleView(){
+      listMode=!listMode;
+      if(listMode){ mapContainer.style.display='none'; listContainer.style.display='block'; buildAlphabeticalList(); toggleListBtn.classList.add('active'); }
+      else{ listContainer.style.display='none'; mapContainer.style.display='block'; toggleListBtn.classList.remove('active'); map.invalidateSize(); }
+    }
+    toggleListBtn.addEventListener('click',toggleView);
   </script>
 </body>
 </html>
