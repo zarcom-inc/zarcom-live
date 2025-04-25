@@ -1,0 +1,19 @@
+name: Обновить сайт вручную
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Pull site from GitHub and deploy to Hetzner
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Connect and update
+        uses: appleboy/ssh-action@master
+        with:
+          host: 5.78.131.127
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            /usr/local/bin/update-site.sh
